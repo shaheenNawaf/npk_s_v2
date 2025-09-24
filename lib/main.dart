@@ -1,13 +1,16 @@
 import 'dart:io';
-import 'dart:convert'; // Required for utf8.decode (for CSV)
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:excel/excel.dart';
 import 'package:csv/csv.dart';
 import 'package:intl/intl.dart';
-import 'package:path/path.dart' as p; // For getting file extension
+import 'package:path/path.dart' as p;
+import 'package:google_generative_ai/google_generative_ai.dart';
 
+// --- Data Model ---
 class SoilData {
   final String? description;
   final DateTime? time;
@@ -30,6 +33,7 @@ class SoilData {
     this.pMgKg,
     this.kMgKg,
   });
+
   factory SoilData.fromMap(Map<String, dynamic> data) {
     T? _parseValue<T>(dynamic value, T? Function(String) parser) {
       if (value == null) return null;
@@ -65,8 +69,8 @@ class SoilData {
         return format.parse(timeString);
       } catch (e) {
         print('Error parsing time $value: $e');
-        return null;
       }
+      return null;
     }
 
     return SoilData(
@@ -86,6 +90,74 @@ class SoilData {
   }
 }
 
+// --- Gemini API Service ---
+class GeminiService {
+  final GenerativeModel _model;
+
+  GeminiService(String apiKey)
+    : _model = GenerativeModel(
+        model: 'gemini-1.5-flash-latest',
+        apiKey: apiKey,
+        generationConfig: GenerationConfig(maxOutputTokens: 2000),
+      );
+
+  Future<String> getPlantRecommendations(SoilData data) async {
+    final prompt = _buildPlantPrompt(data);
+    try {
+      final response = await _model.generateContent([Content.text(prompt)]);
+      return response.text ??
+          "Could not generate a response. Please try again.";
+    } catch (e) {
+      print("Error calling Gemini API: $e");
+      return "An error occurred while getting recommendations. Please check your network and API key.";
+    }
+  }
+
+  Future<String> getSoilCareAdvice(SoilData data) async {
+    final prompt = _buildSoilCarePrompt(data);
+    try {
+      final response = await _model.generateContent([Content.text(prompt)]);
+      return response.text ??
+          "Could not generate a response. Please try again.";
+    } catch (e) {
+      print("Error calling Gemini API: $e");
+      return "An error occurred while getting advice. Please check your network and API key.";
+    }
+  }
+
+  String _buildPlantPrompt(SoilData data) {
+    return '''
+    Analyze the following soil conditions and recommend suitable plants.
+
+    Soil Data:
+    - Temperature: ${data.tempC?.toStringAsFixed(1) ?? 'N/A'} °C
+    - Humidity: ${data.hum?.toStringAsFixed(1) ?? 'N/A'} %
+    - pH: ${data.ph?.toStringAsFixed(2) ?? 'N/A'}
+    - Nitrogen (N): ${data.nMgKg?.toStringAsFixed(1) ?? 'N/A'} mg/kg
+    - Phosphorus (P): ${data.pMgKg?.toStringAsFixed(1) ?? 'N/A'} mg/kg
+    - Potassium (K): ${data.kMgKg?.toStringAsFixed(1) ?? 'N/A'} mg/kg
+    - Conductivity: ${data.conductivityUsCm?.toStringAsFixed(1) ?? 'N/A'} us/cm
+
+    Based on these conditions, what specific plants (vegetables, fruits, flowers) are most suitable for this soil? Please provide a short list with brief reasons for each recommendation.
+    ''';
+  }
+
+  String _buildSoilCarePrompt(SoilData data) {
+    return '''
+    Provide soil care advice based on the following data.
+
+    Current Soil State:
+    - pH: ${data.ph?.toStringAsFixed(2) ?? 'N/A'}
+    - Nitrogen (N): ${data.nMgKg?.toStringAsFixed(1) ?? 'N/A'} mg/kg
+    - Phosphorus (P): ${data.pMgKg?.toStringAsFixed(1) ?? 'N/A'} mg/kg
+    - Potassium (K): ${data.kMgKg?.toStringAsFixed(1) ?? 'N/A'} mg/kg
+
+    Based on this data, how can I best take care of this soil? Provide actionable steps to improve or maintain its health (e.g., what to add, what to avoid).
+    ''';
+  }
+}
+
+// --- Main Application ---
 void main() {
   runApp(const MyApp());
 }
@@ -96,7 +168,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Soil Data App',
+      title: 'Soil Data Analyzer',
       theme: ThemeData(
         primarySwatch: Colors.green,
         visualDensity: VisualDensity.adaptivePlatformDensity,
@@ -117,19 +189,38 @@ class _MyHomePageState extends State<MyHomePage> {
   SoilData? _latestSoilData;
   bool _isLoading = false;
   String? _errorMessage;
+  late final GeminiService _geminiService;
+  bool _isGeminiLoading = false;
+  String? _geminiError;
+  String? _plantRecommendation;
+  String? _soilCareAdvice;
 
-  // NEW: Unified file picking and processing function
+  @override
+  void initState() {
+    super.initState();
+    const apiKey = String.fromEnvironment('GEMINI_API_KEY');
+    if (apiKey.isEmpty) {
+      throw AssertionError(
+        'GEMINI_API_KEY is not set. Please create config.json and run with --dart-define-from-file=config.json',
+      );
+    }
+    _geminiService = GeminiService(apiKey);
+  }
+
   Future<void> _pickAndProcessFile() async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
       _latestSoilData = null;
+      _plantRecommendation = null;
+      _soilCareAdvice = null;
+      _geminiError = null;
     });
 
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['xlsx', 'csv'], // Allow both file types
+        allowedExtensions: ['xlsx', 'csv'],
         withData: true,
       );
 
@@ -183,7 +274,6 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  // NEW: Refactored Excel processing logic
   SoilData? _processExcelData(Uint8List bytes) {
     var excel = Excel.decodeBytes(bytes);
     Sheet? sheet = excel.tables[excel.tables.keys.first];
@@ -221,7 +311,6 @@ class _MyHomePageState extends State<MyHomePage> {
     return tempLatestSoilData;
   }
 
-  // NEW: Added CSV processing logic
   Future<SoilData?> _processCsvData(Uint8List bytes) async {
     final csvString = utf8.decode(bytes);
     final List<List<dynamic>> fields = const CsvToListConverter().convert(
@@ -233,7 +322,7 @@ class _MyHomePageState extends State<MyHomePage> {
     }
 
     final headers = fields[0].map((h) => h.toString().trim()).toList();
-    final timeColumnIndex = headers.indexOf('time');
+    final timeColumnIndex = headers.indexOf('Time');
 
     if (timeColumnIndex == -1) {
       throw Exception("CSV file is missing the 'Time' column.");
@@ -272,6 +361,40 @@ class _MyHomePageState extends State<MyHomePage> {
     return null;
   }
 
+  Future<void> _getPlantRecommendations() async {
+    if (_latestSoilData == null) return;
+    setState(() {
+      _isGeminiLoading = true;
+      _geminiError = null;
+      _plantRecommendation = null;
+    });
+
+    final result = await _geminiService.getPlantRecommendations(
+      _latestSoilData!,
+    );
+
+    setState(() {
+      _plantRecommendation = result;
+      _isGeminiLoading = false;
+    });
+  }
+
+  Future<void> _getSoilCareAdvice() async {
+    if (_latestSoilData == null) return;
+    setState(() {
+      _isGeminiLoading = true;
+      _geminiError = null;
+      _soilCareAdvice = null;
+    });
+
+    final result = await _geminiService.getSoilCareAdvice(_latestSoilData!);
+
+    setState(() {
+      _soilCareAdvice = result;
+      _isGeminiLoading = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -279,11 +402,9 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+          child: ListView(
             children: <Widget>[
               ElevatedButton.icon(
-                // UPDATED: Calls the new unified function
                 onPressed: _isLoading ? null : _pickAndProcessFile,
                 icon: const Icon(Icons.upload_file),
                 label: Text(
@@ -295,7 +416,7 @@ class _MyHomePageState extends State<MyHomePage> {
               if (_isLoading)
                 const Padding(
                   padding: EdgeInsets.all(16.0),
-                  child: CircularProgressIndicator(),
+                  child: Center(child: CircularProgressIndicator()),
                 ),
               if (_errorMessage != null)
                 Padding(
@@ -306,15 +427,45 @@ class _MyHomePageState extends State<MyHomePage> {
                     textAlign: TextAlign.center,
                   ),
                 ),
+
               const SizedBox(height: 20),
+
               if (_latestSoilData != null)
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: SoilDataCard(data: _latestSoilData!),
+                SoilDataCard(
+                  data: _latestSoilData!,
+                  onGetPlants: _getPlantRecommendations,
+                  onGetSoilCare: _getSoilCareAdvice,
+                  isGeminiLoading: _isGeminiLoading,
+                ),
+
+              if (_geminiError != null)
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    _geminiError!,
+                    style: const TextStyle(color: Colors.red),
+                    textAlign: TextAlign.center,
                   ),
-                )
-              else if (!_isLoading && _errorMessage == null)
-                const Text('No data loaded. Please select a file.'),
+                ),
+
+              if (_plantRecommendation != null)
+                GeminiResultCard(
+                  title: "Plant Recommendations",
+                  content: _plantRecommendation!,
+                ),
+
+              if (_soilCareAdvice != null)
+                GeminiResultCard(
+                  title: "Soil Care Advice",
+                  content: _soilCareAdvice!,
+                ),
+
+              if (!_isLoading &&
+                  _latestSoilData == null &&
+                  _errorMessage == null)
+                const Center(
+                  child: Text('No data loaded. Please select a file.'),
+                ),
             ],
           ),
         ),
@@ -323,12 +474,20 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
-// The SoilDataCard widget remains unchanged
+// --- UI Widgets ---
 class SoilDataCard extends StatelessWidget {
-  // ... (No changes here, the widget is the same as the last version)
   final SoilData data;
+  final bool isGeminiLoading;
+  final VoidCallback onGetPlants;
+  final VoidCallback onGetSoilCare;
 
-  const SoilDataCard({super.key, required this.data});
+  const SoilDataCard({
+    super.key,
+    required this.data,
+    required this.isGeminiLoading,
+    required this.onGetPlants,
+    required this.onGetSoilCare,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -347,7 +506,7 @@ class SoilDataCard extends StatelessWidget {
             const Divider(),
             _buildDataRow('Description', data.description),
             _buildDataRow(
-              'Date & Time',
+              'Time',
               data.time != null
                   ? DateFormat('yyyy-MM-dd HH:mm:ss').format(data.time!)
                   : 'N/A',
@@ -379,6 +538,25 @@ class SoilDataCard extends StatelessWidget {
               'Potassium (K)',
               data.kMgKg != null ? '${data.kMgKg} mg/kg' : 'N/A',
             ),
+            const Divider(height: 30),
+            Text('AI Analysis:', style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 10),
+            if (isGeminiLoading)
+              const Center(child: CircularProgressIndicator())
+            else
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton(
+                    onPressed: onGetPlants,
+                    child: const Text('Suggest Plants'),
+                  ),
+                  ElevatedButton(
+                    onPressed: onGetSoilCare,
+                    child: const Text('Get Soil Advice'),
+                  ),
+                ],
+              ),
           ],
         ),
       ),
@@ -392,7 +570,7 @@ class SoilDataCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 120, // Align labels
+            width: 120,
             child: Text(
               '$label:',
               style: const TextStyle(fontWeight: FontWeight.bold),
@@ -400,6 +578,37 @@ class SoilDataCard extends StatelessWidget {
           ),
           Expanded(child: Text(value ?? 'N/A')),
         ],
+      ),
+    );
+  }
+}
+
+class GeminiResultCard extends StatelessWidget {
+  final String title;
+  final String content;
+
+  const GeminiResultCard({
+    super.key,
+    required this.title,
+    required this.content,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 2,
+      color: Colors.green.shade50,
+      margin: const EdgeInsets.symmetric(vertical: 10),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: Theme.of(context).textTheme.headlineSmall),
+            const Divider(),
+            SelectableText(content),
+          ],
+        ),
       ),
     );
   }
