@@ -64,9 +64,9 @@ class SoilData {
     }
 
     return SoilData(
-      description: _parseValue<String>(data['Description'], (s) => s),
-      time: parseTime(data['Time']),
-      tempC: _parseValue<double>(data['temp(C)'], (s) => double.tryParse(s)),
+      description: _parseValue<String>(data['description'], (s) => s),
+      time: parseTime(data['time']),
+      tempC: _parseValue<double>(data['temp(℃)'], (s) => double.tryParse(s)),
       hum: _parseValue<double>(data['hum(%)'], (s) => double.tryParse(s)),
       conductivityUsCm: _parseValue<double>(
         data['conductivity(us/cm)'],

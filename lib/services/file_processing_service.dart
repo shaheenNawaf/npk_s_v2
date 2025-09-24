@@ -1,5 +1,3 @@
-// lib/services/file_processing_service.dart
-
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:csv/csv.dart';
@@ -78,7 +76,7 @@ class FileProcessingService {
             latestRow = row;
           }
         } catch (e) {
-          // Ignore rows with invalid date formats
+          // Empty ang mga rows na not following the format, might add another parser dito just to keep things uniform.
         }
       }
     }

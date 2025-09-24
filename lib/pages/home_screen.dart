@@ -1,18 +1,19 @@
+//Libraries nigga
+
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:path/path.dart' as p;
 
-//For the services and basic data model
+//App Imports
 import '../models/soil_data.dart';
-import '../services/gemini_service.dart';
 import '../services/file_processing_service.dart';
-
-//Inner Cards -- will revisit
-import 'widgets/gemini_result_card.dart';
-import 'widgets/soil_data_card.dart';
+import '../services/gemini_service.dart';
+import 'widgets/app_bar.dart';
+import 'widgets/stat_card.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -22,15 +23,14 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  SoilData? _latestSoilData;
-  bool _isLoading = false;
+  SoilData? _soilData;
+  bool _isLoadingFile = false;
   String? _errorMessage;
+
   late final GeminiService _geminiService;
   late final FileProcessingService _fileProcessingService;
   bool _isGeminiLoading = false;
-  String? _geminiError;
-  String? _plantRecommendation;
-  String? _soilCareAdvice;
+  String? _cropRecommendation;
 
   @override
   void initState() {
@@ -38,7 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
     const apiKey = String.fromEnvironment('GEMINI_API_KEY');
     if (apiKey.isEmpty) {
       throw AssertionError(
-        'GEMINI_API_KEY is not set. Please create config.json and run with --dart-define-from-file=config.json',
+        'GEMINI_API_KEY is not set. Run with --dart-define-from-file=config.json',
       );
     }
     _geminiService = GeminiService(apiKey);
@@ -47,12 +47,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _pickAndProcessFile() async {
     setState(() {
-      _isLoading = true;
+      _isLoadingFile = true;
       _errorMessage = null;
-      _latestSoilData = null;
-      _plantRecommendation = null;
-      _soilCareAdvice = null;
-      _geminiError = null;
+      _soilData = null;
+      _cropRecommendation = null;
     });
 
     try {
@@ -65,19 +63,10 @@ class _HomeScreenState extends State<HomeScreen> {
       if (result != null) {
         final file = result.files.first;
         final fileExtension = p.extension(file.name).toLowerCase();
-        Uint8List? fileBytes;
+        Uint8List? fileBytes =
+            kIsWeb ? file.bytes : await File(file.path!).readAsBytes();
 
-        if (kIsWeb) {
-          fileBytes = file.bytes;
-        } else {
-          if (file.path != null) {
-            fileBytes = await File(file.path!).readAsBytes();
-          }
-        }
-
-        if (fileBytes == null) {
-          throw Exception("Could not read file bytes.");
-        }
+        if (fileBytes == null) throw Exception("Could not read file bytes.");
 
         SoilData? processedData;
         if (fileExtension == '.xlsx') {
@@ -87,14 +76,13 @@ class _HomeScreenState extends State<HomeScreen> {
             fileBytes,
           );
         } else {
-          throw Exception("Unsupported file type: $fileExtension");
+          throw Exception("Unsupported file type.");
         }
 
         setState(() {
-          _latestSoilData = processedData;
-          if (_latestSoilData == null) {
-            _errorMessage =
-                "Could not find a valid row with a timestamp in the file.";
+          _soilData = processedData;
+          if (_soilData == null) {
+            _errorMessage = "Could not find a valid row in the file.";
           }
         });
       } else {
@@ -106,44 +94,24 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         _errorMessage = "Error: ${e.toString()}";
       });
-      print("Error: $e");
     } finally {
       setState(() {
-        _isLoading = false;
+        _isLoadingFile = false;
       });
     }
   }
 
-  Future<void> _getPlantRecommendations() async {
-    if (_latestSoilData == null) return;
+  Future<void> _getRecommendations() async {
+    if (_soilData == null) return;
     setState(() {
       _isGeminiLoading = true;
-      _geminiError = null;
-      _plantRecommendation = null;
+      _cropRecommendation = null;
     });
 
-    final result = await _geminiService.getPlantRecommendations(
-      _latestSoilData!,
-    );
+    final result = await _geminiService.getPlantRecommendations(_soilData!);
 
     setState(() {
-      _plantRecommendation = result;
-      _isGeminiLoading = false;
-    });
-  }
-
-  Future<void> _getSoilCareAdvice() async {
-    if (_latestSoilData == null) return;
-    setState(() {
-      _isGeminiLoading = true;
-      _geminiError = null;
-      _soilCareAdvice = null;
-    });
-
-    final result = await _geminiService.getSoilCareAdvice(_latestSoilData!);
-
-    setState(() {
-      _soilCareAdvice = result;
+      _cropRecommendation = result;
       _isGeminiLoading = false;
     });
   }
@@ -151,78 +119,207 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Soil Data Analyzer')),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: ListView(
-            children: <Widget>[
-              ElevatedButton.icon(
-                onPressed: _isLoading ? null : _pickAndProcessFile,
-                icon: const Icon(Icons.upload_file),
-                label: Text(
-                  _isLoading
-                      ? 'Processing...'
-                      : 'Select Data File (.xlsx, .csv)',
+      appBar: const CustomAppBar(),
+      body: _soilData == null ? _buildWaitingView() : _buildResultsView(),
+    );
+  }
+
+  //Waiting for Sensor
+  Widget _buildWaitingView() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: 150,
+              height: 150,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Center(
+                    child:
+                        _isLoadingFile
+                            ? CircularProgressIndicator(
+                              strokeWidth: 6,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Theme.of(context).primaryColor,
+                              ),
+                            )
+                            : Container(),
+                  ),
+                  Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.grey.shade300, width: 6),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 32),
+            Text(
+              "Waiting for Sensor",
+              style: GoogleFonts.poppins(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              "Place the sensor in the soil, or select a data file to begin.",
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                color: Colors.grey.shade600,
+              ),
+            ),
+            if (_errorMessage != null) ...[
+              const SizedBox(height: 16),
+              Text(
+                _errorMessage!,
+                style: const TextStyle(color: Colors.red),
+                textAlign: TextAlign.center,
+              ),
+            ],
+            const SizedBox(height: 48),
+            ElevatedButton(
+              onPressed: _isLoadingFile ? null : _pickAndProcessFile,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).primaryColor,
+                minimumSize: const Size(double.infinity, 50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              if (_isLoading)
-                const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Center(child: CircularProgressIndicator()),
+              child: Text(
+                _isLoadingFile ? "Processing..." : "Open File",
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
                 ),
-              if (_errorMessage != null)
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    _errorMessage!,
-                    style: const TextStyle(color: Colors.red),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-
-              const SizedBox(height: 20),
-
-              if (_latestSoilData != null)
-                SoilDataCard(
-                  data: _latestSoilData!,
-                  onGetPlants: _getPlantRecommendations,
-                  onGetSoilCare: _getSoilCareAdvice,
-                  isGeminiLoading: _isGeminiLoading,
-                ),
-
-              if (_geminiError != null)
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    _geminiError!,
-                    style: const TextStyle(color: Colors.red),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-
-              if (_plantRecommendation != null)
-                GeminiResultCard(
-                  title: "Plant Recommendations",
-                  content: _plantRecommendation!,
-                ),
-
-              if (_soilCareAdvice != null)
-                GeminiResultCard(
-                  title: "Soil Care Advice",
-                  content: _soilCareAdvice!,
-                ),
-
-              if (!_isLoading &&
-                  _latestSoilData == null &&
-                  _errorMessage == null)
-                const Center(
-                  child: Text('No data loaded. Please select a file.'),
-                ),
-            ],
-          ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: () {},
+              child: Text(
+                "Input Manually",
+                style: GoogleFonts.poppins(color: Colors.grey.shade700),
+              ),
+            ),
+          ],
         ),
       ),
+    );
+  }
+
+  /// Soil Analysis Complete Screen
+  Widget _buildResultsView() {
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSectionTitle("Soil Analysis Complete"),
+            const SizedBox(height: 16),
+            GridView.count(
+              crossAxisCount: 3,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 0.9,
+              children: [
+                StatCard(
+                  title: "Potassium",
+                  value: _soilData?.kMgKg?.toStringAsFixed(0) ?? 'N/A',
+                  unit: "mg/kg",
+                  range: "Range: 0-3000 (Optimal: 200-400)",
+                ),
+                StatCard(
+                  title: "Phosphorus",
+                  value: _soilData?.pMgKg?.toStringAsFixed(0) ?? 'N/A',
+                  unit: "mg/kg",
+                  range: "Range: 0-200 (Optimal: 15-50)",
+                ),
+                StatCard(
+                  title: "Nitrogen",
+                  value: _soilData?.nMgKg?.toStringAsFixed(0) ?? 'N/A',
+                  unit: "mg/kg",
+                  range: "Range: 0-300 (Optimal: 15-40)",
+                ),
+                StatCard(
+                  title: "Moisture",
+                  value: _soilData?.hum?.toStringAsFixed(0) ?? 'N/A',
+                  unit: "%",
+                  range: "Range: 0-100% (Optimal: 30-60%)",
+                ),
+                StatCard(
+                  title: "pH Level",
+                  value: _soilData?.ph?.toStringAsFixed(1) ?? 'N/A',
+                  unit: "",
+                  range: "Optimal Range: 5.5-7.5)",
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            _buildSectionTitle("✨ AI Recommendations"),
+            const SizedBox(height: 16),
+            if (_cropRecommendation != null)
+              Card(
+                color: Colors.green.shade50,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: SelectableText(_cropRecommendation!),
+                ),
+              ),
+
+            if (_isGeminiLoading)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _isGeminiLoading ? null : _getRecommendations,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).primaryColor,
+                minimumSize: const Size(double.infinity, 50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Text(
+                "🤖 Get Crop Recommendations",
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold),
     );
   }
 }
