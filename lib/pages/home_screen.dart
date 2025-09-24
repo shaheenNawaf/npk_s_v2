@@ -1,5 +1,3 @@
-//Libraries nigga
-
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
@@ -8,10 +6,11 @@ import 'package:file_picker/file_picker.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:path/path.dart' as p;
 
-//App Imports
 import '../models/soil_data.dart';
+import '../models/crop_prediction.dart';
 import '../services/file_processing_service.dart';
 import '../services/gemini_service.dart';
+import '../services/prediction_service.dart';
 import 'widgets/app_bar.dart';
 import 'widgets/stat_card.dart';
 
@@ -29,8 +28,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   late final GeminiService _geminiService;
   late final FileProcessingService _fileProcessingService;
-  bool _isGeminiLoading = false;
-  String? _cropRecommendation;
+  late final PredictionService _predictionService;
+
+  bool _isPredicting = false;
+  bool _isGettingAdvice = false;
+  CropPrediction? _cropPrediction; // For the TF/LLM Crop Recommendation
+  String? _aiAdvice;
 
   @override
   void initState() {
@@ -43,6 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     _geminiService = GeminiService(apiKey);
     _fileProcessingService = FileProcessingService();
+    _predictionService = PredictionService();
   }
 
   Future<void> _pickAndProcessFile() async {
@@ -50,7 +54,8 @@ class _HomeScreenState extends State<HomeScreen> {
       _isLoadingFile = true;
       _errorMessage = null;
       _soilData = null;
-      _cropRecommendation = null;
+      _cropPrediction = null;
+      _aiAdvice = null;
     });
 
     try {
@@ -101,18 +106,43 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _getRecommendations() async {
+  Future<void> _predictBestCrop() async {
     if (_soilData == null) return;
     setState(() {
-      _isGeminiLoading = true;
-      _cropRecommendation = null;
+      _isPredicting = true;
+      _errorMessage = null;
+      _cropPrediction = null;
     });
 
-    final result = await _geminiService.getPlantRecommendations(_soilData!);
+    try {
+      final result = await _predictionService.predictCrop(_soilData!);
+      setState(() {
+        _cropPrediction = result;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString();
+      });
+    } finally {
+      setState(() {
+        _isPredicting = false;
+      });
+    }
+  }
+
+  Future<void> _getGeneralAiAdvice() async {
+    if (_soilData == null) return;
+    setState(() {
+      _isGettingAdvice = true;
+      _errorMessage = null;
+      _aiAdvice = null;
+    });
+
+    final result = await _geminiService.getSoilCareAdvice(_soilData!);
 
     setState(() {
-      _cropRecommendation = result;
-      _isGeminiLoading = false;
+      _aiAdvice = result;
+      _isGettingAdvice = false;
     });
   }
 
@@ -124,7 +154,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  //Waiting for Sensor
   Widget _buildWaitingView() {
     return Center(
       child: Padding(
@@ -204,7 +233,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 16),
             TextButton(
-              onPressed: () {},
+              onPressed: () {}, // Placeholder for manual input
               child: Text(
                 "Input Manually",
                 style: GoogleFonts.poppins(color: Colors.grey.shade700),
@@ -216,8 +245,9 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// Soil Analysis Complete Screen
   Widget _buildResultsView() {
+    bool isAnyActionLoading = _isPredicting || _isGettingAdvice;
+
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -266,11 +296,18 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 24),
 
-            _buildSectionTitle("✨ AI Recommendations"),
-            const SizedBox(height: 16),
-            if (_cropRecommendation != null)
+            if (_cropPrediction != null) ...[
+              const SizedBox(height: 24),
+              _buildSectionTitle("Custom Model Prediction"),
+              const SizedBox(height: 16),
+              _buildPredictionResultCard(_cropPrediction!),
+            ],
+
+            if (_aiAdvice != null) ...[
+              const SizedBox(height: 24),
+              _buildSectionTitle("General AI Advice"),
+              const SizedBox(height: 16),
               Card(
                 color: Colors.green.shade50,
                 elevation: 0,
@@ -279,34 +316,117 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child: SelectableText(_cropRecommendation!),
+                  child: SelectableText(_aiAdvice!),
                 ),
               ),
+            ],
 
-            if (_isGeminiLoading)
+            if (_errorMessage != null) ...[
+              const SizedBox(height: 16),
+              Center(
+                child: Text(
+                  _errorMessage!,
+                  style: const TextStyle(color: Colors.red),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
+
+            const SizedBox(height: 32),
+
+            if (isAnyActionLoading)
               const Center(
                 child: Padding(
-                  padding: EdgeInsets.all(16.0),
+                  padding: EdgeInsets.all(8.0),
                   child: CircularProgressIndicator(),
                 ),
+              )
+            else
+              Column(
+                children: [
+                  ElevatedButton(
+                    onPressed: _predictBestCrop,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).primaryColor,
+                      minimumSize: const Size(double.infinity, 50),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      "Predict Best Crop",
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  ElevatedButton(
+                    onPressed: _getGeneralAiAdvice,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blueGrey,
+                      minimumSize: const Size(double.infinity, 50),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      "Get General AI Advice",
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
               ),
+          ],
+        ),
+      ),
+    );
+  }
 
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _isGeminiLoading ? null : _getRecommendations,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).primaryColor,
-                minimumSize: const Size(double.infinity, 50),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+  Widget _buildPredictionResultCard(CropPrediction prediction) {
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Family: ${prediction.cropFamily}",
+              style: GoogleFonts.poppins(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
               ),
-              child: Text(
-                "🤖 Get Crop Recommendations",
-                style: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
+            ),
+            Text(
+              "Confidence: ${(prediction.familyConfidence * 100).toStringAsFixed(1)}%",
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                color: Colors.grey.shade600,
+              ),
+            ),
+            const Divider(height: 24),
+            Text(
+              "Top Recommendations:",
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            ...prediction.topCrops.map(
+              (crop) => ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.grass, color: Colors.green),
+                title: Text(crop.specificCrop, style: GoogleFonts.poppins()),
+                trailing: Text(
+                  "${(crop.confidence * 100).toStringAsFixed(1)}%",
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
                 ),
               ),
             ),
