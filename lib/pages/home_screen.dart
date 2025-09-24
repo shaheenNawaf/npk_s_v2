@@ -1,3 +1,5 @@
+// lib/screens/home_screen.dart
+
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
@@ -7,7 +9,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:path/path.dart' as p;
 
 import '../models/soil_data.dart';
-import '../models/crop_prediction.dart';
+import '../models/crop_prediction.dart'; // <-- THE FIX IS HERE
 import '../services/file_processing_service.dart';
 import '../services/gemini_service.dart';
 import '../services/prediction_service.dart';
@@ -22,17 +24,20 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  // State variables for data and loading
   SoilData? _soilData;
   bool _isLoadingFile = false;
   String? _errorMessage;
 
+  // State variables for AI services
   late final GeminiService _geminiService;
   late final FileProcessingService _fileProcessingService;
   late final PredictionService _predictionService;
 
+  // State variables for AI results and loading
   bool _isPredicting = false;
   bool _isGettingAdvice = false;
-  CropPrediction? _cropPrediction; // For the TF/LLM Crop Recommendation
+  CropPrediction? _cropPrediction;
   String? _aiAdvice;
 
   @override
@@ -233,7 +238,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 16),
             TextButton(
-              onPressed: () {}, // Placeholder for manual input
+              onPressed: () {},
               child: Text(
                 "Input Manually",
                 style: GoogleFonts.poppins(color: Colors.grey.shade700),
@@ -269,44 +274,52 @@ class _HomeScreenState extends State<HomeScreen> {
                   value: _soilData?.kMgKg?.toStringAsFixed(0) ?? 'N/A',
                   unit: "mg/kg",
                   range: "Range: 0-3000 (Optimal: 200-400)",
+                  rangeMin: 200,
+                  rangeMax: 400,
                 ),
                 StatCard(
                   title: "Phosphorus",
                   value: _soilData?.pMgKg?.toStringAsFixed(0) ?? 'N/A',
                   unit: "mg/kg",
                   range: "Range: 0-200 (Optimal: 15-50)",
+                  rangeMin: 15,
+                  rangeMax: 50,
                 ),
                 StatCard(
                   title: "Nitrogen",
                   value: _soilData?.nMgKg?.toStringAsFixed(0) ?? 'N/A',
                   unit: "mg/kg",
                   range: "Range: 0-300 (Optimal: 15-40)",
+                  rangeMin: 15,
+                  rangeMax: 40,
                 ),
                 StatCard(
                   title: "Moisture",
                   value: _soilData?.hum?.toStringAsFixed(0) ?? 'N/A',
                   unit: "%",
                   range: "Range: 0-100% (Optimal: 30-60%)",
+                  rangeMin: 30,
+                  rangeMax: 60,
                 ),
                 StatCard(
                   title: "pH Level",
                   value: _soilData?.ph?.toStringAsFixed(1) ?? 'N/A',
                   unit: "",
                   range: "Optimal Range: 5.5-7.5)",
+                  rangeMin: 5,
+                  rangeMax: 7,
                 ),
               ],
             ),
-
             if (_cropPrediction != null) ...[
               const SizedBox(height: 24),
-              _buildSectionTitle("Custom Model Prediction"),
+              _buildSectionTitle("🖥 Custom Model Prediction"),
               const SizedBox(height: 16),
               _buildPredictionResultCard(_cropPrediction!),
             ],
-
             if (_aiAdvice != null) ...[
               const SizedBox(height: 24),
-              _buildSectionTitle("General AI Advice"),
+              _buildSectionTitle("🦾 General AI Advice"),
               const SizedBox(height: 16),
               Card(
                 color: Colors.green.shade50,
@@ -320,7 +333,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ],
-
             if (_errorMessage != null) ...[
               const SizedBox(height: 16),
               Center(
@@ -331,9 +343,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ],
-
             const SizedBox(height: 32),
-
             if (isAnyActionLoading)
               const Center(
                 child: Padding(

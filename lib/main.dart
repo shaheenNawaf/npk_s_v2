@@ -15,7 +15,7 @@ class MyApp extends StatelessWidget {
       title: 'AGRI-SENSE',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primaryColor: const Color.fromARGB(255, 45, 110, 48),
+        primaryColor: const Color.fromARGB(255, 85, 192, 90),
         scaffoldBackgroundColor: Colors.white,
         textTheme: GoogleFonts.poppinsTextTheme(Theme.of(context).textTheme),
       ),
