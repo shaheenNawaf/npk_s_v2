@@ -24,6 +24,18 @@ class SoilData {
     this.kMgKg,
   });
 
+  Map<String, dynamic> toJson() {
+    return {
+      'tempC': tempC,
+      'hum': hum,
+      'ph': ph,
+      'n': nMgKg,
+      'p': pMgKg,
+      'k': kMgKg,
+      'conductivity': conductivityUsCm,
+    };
+  }
+
   factory SoilData.fromMap(Map<String, dynamic> data) {
     T? _parseValue<T>(dynamic value, T? Function(String) parser) {
       if (value == null) return null;
