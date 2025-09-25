@@ -37,7 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // State variables for AI results and loading
   bool _isPredicting = false;
   bool _isGettingAdvice = false;
-  CropPrediction? _cropPrediction;
+  PredictionResponse? _cropPrediction;
   String? _aiAdvice;
 
   @override
@@ -76,14 +76,12 @@ class _HomeScreenState extends State<HomeScreen> {
         Uint8List? fileBytes =
             kIsWeb ? file.bytes : await File(file.path!).readAsBytes();
 
-        if (fileBytes == null) throw Exception("Could not read file bytes.");
-
         SoilData? processedData;
         if (fileExtension == '.xlsx') {
-          processedData = _fileProcessingService.processExcelData(fileBytes);
+          processedData = _fileProcessingService.processExcelData(fileBytes!);
         } else if (fileExtension == '.csv') {
           processedData = await _fileProcessingService.processCsvData(
-            fileBytes,
+            fileBytes!,
           );
         } else {
           throw Exception("Unsupported file type.");
@@ -270,20 +268,12 @@ class _HomeScreenState extends State<HomeScreen> {
               childAspectRatio: 0.9,
               children: [
                 StatCard(
-                  title: "Potassium",
-                  value: _soilData?.kMgKg?.toStringAsFixed(0) ?? 'N/A',
-                  unit: "mg/kg",
-                  range: "Range: 0-3000 (Optimal: 200-400)",
-                  rangeMin: 200,
-                  rangeMax: 400,
-                ),
-                StatCard(
-                  title: "Phosphorus",
-                  value: _soilData?.pMgKg?.toStringAsFixed(0) ?? 'N/A',
-                  unit: "mg/kg",
-                  range: "Range: 0-200 (Optimal: 15-50)",
-                  rangeMin: 15,
-                  rangeMax: 50,
+                  title: "pH Level",
+                  value: _soilData?.ph?.toStringAsFixed(1) ?? 'N/A',
+                  unit: "",
+                  range: "Optimal Range: 5.5-7.5)",
+                  rangeMin: 5,
+                  rangeMax: 7,
                 ),
                 StatCard(
                   title: "Nitrogen",
@@ -294,20 +284,28 @@ class _HomeScreenState extends State<HomeScreen> {
                   rangeMax: 40,
                 ),
                 StatCard(
+                  title: "Phosphorus",
+                  value: _soilData?.pMgKg?.toStringAsFixed(0) ?? 'N/A',
+                  unit: "mg/kg",
+                  range: "Range: 0-200 (Optimal: 15-50)",
+                  rangeMin: 15,
+                  rangeMax: 50,
+                ),
+                StatCard(
+                  title: "Potassium",
+                  value: _soilData?.kMgKg?.toStringAsFixed(0) ?? 'N/A',
+                  unit: "mg/kg",
+                  range: "Range: 0-3000 (Optimal: 200-400)",
+                  rangeMin: 200,
+                  rangeMax: 400,
+                ),
+                StatCard(
                   title: "Moisture",
                   value: _soilData?.hum?.toStringAsFixed(0) ?? 'N/A',
                   unit: "%",
                   range: "Range: 0-100% (Optimal: 30-60%)",
                   rangeMin: 30,
                   rangeMax: 60,
-                ),
-                StatCard(
-                  title: "pH Level",
-                  value: _soilData?.ph?.toStringAsFixed(1) ?? 'N/A',
-                  unit: "",
-                  range: "Optimal Range: 5.5-7.5)",
-                  rangeMin: 5,
-                  rangeMax: 7,
                 ),
               ],
             ),
@@ -397,52 +395,64 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildPredictionResultCard(CropPrediction prediction) {
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Family: ${prediction.cropFamily}",
-              style: GoogleFonts.poppins(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+  Widget _buildPredictionResultCard(PredictionResponse predictionResponse) {
+    return Column(
+      children:
+          predictionResponse.predictions.map((prediction) {
+            return Card(
+              elevation: 1,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
-            ),
-            Text(
-              "Confidence: ${(prediction.familyConfidence * 100).toStringAsFixed(1)}%",
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                color: Colors.grey.shade600,
-              ),
-            ),
-            const Divider(height: 24),
-            Text(
-              "Top Recommendations:",
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 8),
-            ...prediction.topCrops.map(
-              (crop) => ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.grass, color: Colors.green),
-                title: Text(crop.specificCrop, style: GoogleFonts.poppins()),
-                trailing: Text(
-                  "${(crop.confidence * 100).toStringAsFixed(1)}%",
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Family: ${prediction.cropFamily}",
+                      style: GoogleFonts.poppins(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      "Confidence: ${(prediction.familyConfidence * 100).toStringAsFixed(1)}%",
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                    const Divider(height: 24),
+                    Text(
+                      "Top Recommendations:",
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ...prediction.topCrops.map(
+                      (crop) => ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(Icons.grass, color: Colors.green),
+                        title: Text(
+                          crop.specificCrop,
+                          style: GoogleFonts.poppins(),
+                        ),
+                        trailing: Text(
+                          "${(crop.confidence * 100).toStringAsFixed(1)}%",
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-          ],
-        ),
-      ),
+            );
+          }).toList(),
     );
   }
 

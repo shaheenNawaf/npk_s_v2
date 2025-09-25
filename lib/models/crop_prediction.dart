@@ -21,6 +21,20 @@ class CropPrediction {
   }
 }
 
+class PredictionResponse {
+  final List<CropPrediction> predictions;
+
+  PredictionResponse({required this.predictions});
+
+  factory PredictionResponse.fromJson(Map<String, dynamic> json) {
+    var list = json['predictions'] as List ?? [];
+    List<CropPrediction> predictions =
+        list.map((i) => CropPrediction.fromJson(i)).toList();
+
+    return PredictionResponse(predictions: predictions);
+  }
+}
+
 // Represents one of the items in the "top_crops" list
 class TopCrop {
   final String specificCrop;
