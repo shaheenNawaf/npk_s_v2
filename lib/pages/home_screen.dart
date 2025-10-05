@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:npk_s_v2/models/ai_advice.dart';
 import 'package:path/path.dart' as p;
 
 import '../models/soil_data.dart';
@@ -24,21 +25,18 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // State variables for data and loading
   SoilData? _soilData;
   bool _isLoadingFile = false;
   String? _errorMessage;
 
-  // State variables for AI services
   late final GeminiService _geminiService;
   late final FileProcessingService _fileProcessingService;
   late final PredictionService _predictionService;
 
-  // State variables for AI results and loading
   bool _isPredicting = false;
   bool _isGettingAdvice = false;
   PredictionResponse? _cropPrediction;
-  String? _aiAdvice;
+  AiAdvice? _aiAdvice;
 
   @override
   void initState() {
@@ -317,19 +315,9 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
             if (_aiAdvice != null) ...[
               const SizedBox(height: 24),
-              _buildSectionTitle("🦾 General AI Advice"),
+              _buildSectionTitle("General AI Advice"),
               const SizedBox(height: 16),
-              Card(
-                color: Colors.green.shade50,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: SelectableText(_aiAdvice!),
-                ),
-              ),
+              _buildAiAdviceCard(_aiAdvice!),
             ],
             if (_errorMessage != null) ...[
               const SizedBox(height: 16),
@@ -453,6 +441,85 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             );
           }).toList(),
+    );
+  }
+
+  Widget _buildAiAdviceCard(AiAdvice advice) {
+    return Card(
+      color: Colors.blueGrey.shade50,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.blueGrey.shade100),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              advice.title,
+              style: GoogleFonts.poppins(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.blueGrey.shade800,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              advice.summary,
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                color: Colors.blueGrey.shade700,
+              ),
+            ),
+            const Divider(height: 24),
+
+            if (advice.actionableSteps.isNotEmpty) ...[
+              Text(
+                "Actionable Steps:",
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              ...advice.actionableSteps.map(
+                (step) => ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(
+                    Icons.check_circle_outline,
+                    color: Colors.green.shade600,
+                  ),
+                  title: Text(step, style: GoogleFonts.poppins()),
+                ),
+              ),
+            ],
+
+            if (advice.thingsToAvoid.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Text(
+                "Things to Avoid:",
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              ...advice.thingsToAvoid.map(
+                (item) => ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(
+                    Icons.highlight_off,
+                    color: Colors.red.shade400,
+                  ),
+                  title: Text(item, style: GoogleFonts.poppins()),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 
