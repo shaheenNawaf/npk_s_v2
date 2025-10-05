@@ -29,7 +29,7 @@ class StatCard extends StatelessWidget {
 
     if (numericValue != null) {
       if (numericValue >= rangeMin && numericValue <= rangeMax) {
-        cardColor = Colors.green.shade50;
+        cardColor = const Color.fromARGB(255, 191, 230, 194);
         valueColor = Colors.green.shade800;
         statusIcon = Icon(
           Icons.check_circle,
@@ -37,7 +37,7 @@ class StatCard extends StatelessWidget {
           size: 16,
         );
       } else {
-        cardColor = Colors.amber.shade50;
+        cardColor = const Color.fromARGB(255, 191, 230, 194);
         valueColor = Colors.amber.shade900;
         statusIcon = Icon(
           Icons.warning,
@@ -46,7 +46,7 @@ class StatCard extends StatelessWidget {
         );
       }
     } else {
-      cardColor = const Color(0xFFF5F7FA);
+      cardColor = const Color.fromARGB(255, 191, 230, 194);
       valueColor = Colors.black87;
       statusIcon = null;
     }
