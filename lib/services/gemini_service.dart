@@ -79,7 +79,7 @@ class GeminiService {
     return '''
     RESPOND ONLY WITH a JSON object in the following format:
     {
-      "title": "<Creative title for the advice>",
+      "title": "<Title for the advice>",
       "summary": "<A two sentence summary>",
       "actionable_steps": ["<Step 1>", "<Step 2>", "..."],
       "things_to_avoid": ["<Thing to avoid 1>", "<Thing to avoid 2>", "..."]
