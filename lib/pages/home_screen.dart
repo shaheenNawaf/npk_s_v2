@@ -315,7 +315,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
             if (_aiAdvice != null) ...[
               const SizedBox(height: 24),
-              _buildSectionTitle("General AI Advice"),
+              _buildSectionTitle("🤖 General AI Advice"),
               const SizedBox(height: 16),
               _buildAiAdviceCard(_aiAdvice!),
             ],
