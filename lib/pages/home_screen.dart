@@ -301,7 +301,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   title: "Moisture",
                   value: _soilData?.hum?.toStringAsFixed(0) ?? 'N/A',
                   unit: "%",
-                  range: "Optimal Range: 30-60%)",
+                  range: "Optimal Range: 30-60%",
                   rangeMin: 30,
                   rangeMax: 60,
                 ),
