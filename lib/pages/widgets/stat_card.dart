@@ -58,7 +58,7 @@ class StatCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12.0),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -70,31 +70,28 @@ class StatCard extends StatelessWidget {
               if (statusIcon != null) ...[const SizedBox(width: 2), statusIcon],
             ],
           ),
-          const Spacer(),
+          const SizedBox(height: 2),
           Row(
             crossAxisAlignment: CrossAxisAlignment.baseline,
+            mainAxisAlignment: MainAxisAlignment.center,
             textBaseline: TextBaseline.alphabetic,
             children: [
-              Expanded(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    value,
-                    style: GoogleFonts.poppins(
-                      color: valueColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 32,
-                    ),
-                  ),
+              Text(
+                value,
+                style: GoogleFonts.poppins(
+                  color: valueColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 32,
                 ),
               ),
+              const SizedBox(width: 5),
               Text(
                 unit,
-                style: GoogleFonts.poppins(color: Colors.black54, fontSize: 8),
+                style: GoogleFonts.poppins(color: Colors.black54, fontSize: 15),
               ),
             ],
           ),
+          const SizedBox(height: 2),
           Text(
             range,
             style: GoogleFonts.poppins(color: Colors.black54, fontSize: 8),
