@@ -51,7 +51,18 @@ class GeminiService {
         throw Exception("Received an empty response from the AI.");
       }
 
-      return AiAdvice.fromJson(responseText);
+      final startIndex = responseText.indexOf('{');
+      final endIndex = responseText.lastIndexOf('}');
+
+      if (startIndex == -1 || endIndex == -1) {
+        throw FormatException(
+          "Could not find a valid JSON object in the model's response.",
+        );
+      }
+
+      final jsonString = responseText.substring(startIndex, endIndex + 1);
+
+      return AiAdvice.fromJson(jsonString);
     } catch (e) {
       print("Error parsing Gemini JSON: $e");
       return AiAdvice(
@@ -66,20 +77,20 @@ class GeminiService {
 
   String _buildSoilCarePrompt(SoilData data) {
     return '''
-    Provide soil care advice based on the following data.
     RESPOND ONLY WITH a JSON object in the following format:
     {
-      "title": "<A creative title for the advice>",
-      "summary": "<A one or two sentence summary>",
+      "title": "<Creative title for the advice>",
+      "summary": "<A two sentence summary>",
       "actionable_steps": ["<Step 1>", "<Step 2>", "..."],
       "things_to_avoid": ["<Thing to avoid 1>", "<Thing to avoid 2>", "..."]
     }
 
+    Provide soil care advice based on the following data.
     Current Soil State:
-    - pH: ${data.ph?.toStringAsFixed(2) ?? 'N/A'}
-    - Nitrogen (N): ${data.nMgKg?.toStringAsFixed(1) ?? 'N/A'} mg/kg
-    - Phosphorus (P): ${data.pMgKg?.toStringAsFixed(1) ?? 'N/A'} mg/kg
-    - Potassium (K): ${data.kMgKg?.toStringAsFixed(1) ?? 'N/A'} mg/kg
+        - pH: ${data.ph?.toStringAsFixed(2) ?? 'N/A'}
+        - Nitrogen (N): ${data.nMgKg?.toStringAsFixed(1) ?? 'N/A'} mg/kg
+        - Phosphorus (P): ${data.pMgKg?.toStringAsFixed(1) ?? 'N/A'} mg/kg
+        - Potassium (K): ${data.kMgKg?.toStringAsFixed(1) ?? 'N/A'} mg/kg
     ''';
   }
 }
