@@ -253,9 +253,9 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            _buildSectionTitle("Soil Analysis Complete"),
+            _buildSectionTitle("✅ Soil Analysis Complete"),
             const SizedBox(height: 16),
             GridView.count(
               crossAxisCount: 3,
@@ -263,7 +263,7 @@ class _HomeScreenState extends State<HomeScreen> {
               physics: const NeverScrollableScrollPhysics(),
               mainAxisSpacing: 12,
               crossAxisSpacing: 12,
-              childAspectRatio: 0.9,
+              childAspectRatio: 1.2,
               children: [
                 StatCard(
                   title: "pH Level",
@@ -277,7 +277,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   title: "Nitrogen",
                   value: _soilData?.nMgKg?.toStringAsFixed(0) ?? 'N/A',
                   unit: "mg/kg",
-                  range: "Range: 0-300 (Optimal: 15-40)",
+                  range: "Optimal Range: 15-40",
                   rangeMin: 15,
                   rangeMax: 40,
                 ),
@@ -285,7 +285,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   title: "Phosphorus",
                   value: _soilData?.pMgKg?.toStringAsFixed(0) ?? 'N/A',
                   unit: "mg/kg",
-                  range: "Range: 0-200 (Optimal: 15-50)",
+                  range: "Optimal Range: 15-50",
                   rangeMin: 15,
                   rangeMax: 50,
                 ),
@@ -293,7 +293,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   title: "Potassium",
                   value: _soilData?.kMgKg?.toStringAsFixed(0) ?? 'N/A',
                   unit: "mg/kg",
-                  range: "Range: 0-3000 (Optimal: 200-400)",
+                  range: "Optimal Range: 200-400",
                   rangeMin: 200,
                   rangeMax: 400,
                 ),
@@ -301,7 +301,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   title: "Moisture",
                   value: _soilData?.hum?.toStringAsFixed(0) ?? 'N/A',
                   unit: "%",
-                  range: "Range: 0-100% (Optimal: 30-60%)",
+                  range: "Optimal Range: 30-60%)",
                   rangeMin: 30,
                   rangeMax: 60,
                 ),
@@ -526,7 +526,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
-      style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold),
+      style: GoogleFonts.poppins(
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+        color: const Color.fromARGB(255, 24, 104, 0),
+      ),
     );
   }
 }
