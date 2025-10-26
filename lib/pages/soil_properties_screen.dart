@@ -1,10 +1,8 @@
-// lib/screens/soil_properties_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/soil_data.dart';
 import 'widgets/app_bar.dart';
-import 'results_screen.dart';
+import 'location_climate_screen.dart';
 
 class SoilPropertiesScreen extends StatefulWidget {
   final SoilData soilData;
@@ -19,7 +17,6 @@ class _SoilPropertiesScreenState extends State<SoilPropertiesScreen> {
   final _formKey = GlobalKey<FormState>();
   late SoilData _soilData;
 
-  // Dropdown options
   final List<String> _soilTypes = [
     'Beach sand',
     'Silty clay',
@@ -69,7 +66,7 @@ class _SoilPropertiesScreenState extends State<SoilPropertiesScreen> {
     super.dispose();
   }
 
-  void _onAnalyze() {
+  void _onNext() {
     if (_formKey.currentState!.validate()) {
       setState(() {
         _soilData.soilType = _selectedSoilType;
@@ -88,7 +85,7 @@ class _SoilPropertiesScreenState extends State<SoilPropertiesScreen> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => ResultsScreen(soilData: _soilData),
+          builder: (context) => LocationClimateScreen(soilData: _soilData),
         ),
       );
     }
@@ -113,27 +110,49 @@ class _SoilPropertiesScreenState extends State<SoilPropertiesScreen> {
                 ),
               ),
               const SizedBox(height: 24),
+
               _buildDropdown(
                 "Soil Type",
+                "Select a soil type",
                 _soilTypes,
                 _selectedSoilType,
                 (val) => setState(() => _selectedSoilType = val),
               ),
               _buildDropdown(
                 "Soil Texture Group",
+                "Select a texture group",
                 _textureGroups,
                 _selectedTextureGroup,
                 (val) => setState(() => _selectedTextureGroup = val),
               ),
-              _buildTextField("Sand Content", "%", _sandController),
-              _buildTextField("Silt Content", "%", _siltController),
-              _buildTextField("Clay Content", "%", _clayController),
+
+              _buildTextField(
+                "Sand Content",
+                "%",
+                _sandController,
+                isNumeric: true,
+              ),
+              _buildTextField(
+                "Silt Content",
+                "%",
+                _siltController,
+                isNumeric: true,
+              ),
+              _buildTextField(
+                "Clay Content",
+                "%",
+                _clayController,
+                isNumeric: true,
+              ),
+
               SwitchListTile(
                 title: Text("Is the soil loamy?", style: GoogleFonts.poppins()),
                 value: _isLoam,
                 onChanged: (val) => setState(() => _isLoam = val),
-                activeColor: Theme.of(context).primaryColor,
+                activeThumbColor: Theme.of(context).primaryColor,
+                contentPadding: EdgeInsets.zero,
               ),
+
               const SizedBox(height: 16),
               _buildTextField(
                 "Existing Crops",
@@ -147,9 +166,10 @@ class _SoilPropertiesScreenState extends State<SoilPropertiesScreen> {
                 _primaryCropController,
                 isOptional: true,
               ),
+
               const SizedBox(height: 32),
               ElevatedButton(
-                onPressed: _onAnalyze,
+                onPressed: _onNext,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).primaryColor,
                   minimumSize: const Size(double.infinity, 50),
@@ -158,7 +178,7 @@ class _SoilPropertiesScreenState extends State<SoilPropertiesScreen> {
                   ),
                 ),
                 child: Text(
-                  "Analyze Soil",
+                  "Next",
                   style: GoogleFonts.poppins(
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
@@ -173,8 +193,10 @@ class _SoilPropertiesScreenState extends State<SoilPropertiesScreen> {
     );
   }
 
+  // Helper widget for creating dropdowns consistently
   Widget _buildDropdown(
     String label,
+    String hint,
     List<String> items,
     String? selectedValue,
     ValueChanged<String?> onChanged,
@@ -182,32 +204,44 @@ class _SoilPropertiesScreenState extends State<SoilPropertiesScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: DropdownButtonFormField<String>(
-        value: selectedValue,
+        initialValue: selectedValue,
         onChanged: onChanged,
         decoration: InputDecoration(
           labelText: label,
+          hintText: hint,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
         ),
         items:
             items.map((String value) {
-              return DropdownMenuItem<String>(value: value, child: Text(value));
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Text(value, overflow: TextOverflow.ellipsis),
+              );
             }).toList(),
+        validator: (value) {
+          if (value == null) {
+            return 'Please select an option';
+          }
+          return null;
+        },
       ),
     );
   }
 
+  // Helper widget for creating text fields consistently
   Widget _buildTextField(
     String label,
     String unit,
     TextEditingController controller, {
     bool isOptional = false,
+    bool isNumeric = false,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: TextFormField(
         controller: controller,
         keyboardType:
-            unit == '%'
+            isNumeric
                 ? const TextInputType.numberWithOptions(decimal: true)
                 : TextInputType.text,
         decoration: InputDecoration(
@@ -218,6 +252,12 @@ class _SoilPropertiesScreenState extends State<SoilPropertiesScreen> {
         validator: (value) {
           if (!isOptional && (value == null || value.isEmpty)) {
             return 'This field cannot be empty';
+          }
+          if (isNumeric &&
+              value != null &&
+              value.isNotEmpty &&
+              double.tryParse(value) == null) {
+            return 'Please enter a valid number';
           }
           return null;
         },

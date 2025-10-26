@@ -30,6 +30,11 @@ class SoilData {
   bool? isLoam;
   String? existingCrops;
   String? primaryCrop;
+  double? latitude;
+  double? longitude;
+  double? avgTempC;
+  double? avgHumidity;
+  double? avgPrecipitation;
 
   SoilData({
     this.description,
@@ -60,6 +65,11 @@ class SoilData {
     this.isLoam,
     this.existingCrops,
     this.primaryCrop,
+    this.latitude,
+    this.longitude,
+    this.avgTempC,
+    this.avgHumidity,
+    this.avgPrecipitation,
   });
 
   factory SoilData.fromMap(Map<String, dynamic> data) {
@@ -145,6 +155,11 @@ class SoilData {
       'isLoam': isLoam,
       'existingCrops': existingCrops,
       'primaryCrop': primaryCrop,
+      'latitude': latitude,
+      'longitude': longitude,
+      'avgTempC': avgTempC,
+      'avgHumidity': avgHumidity,
+      'avgPrecipitation': avgPrecipitation,
     };
   }
 }
