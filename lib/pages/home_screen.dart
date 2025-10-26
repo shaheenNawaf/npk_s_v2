@@ -1,21 +1,15 @@
-// lib/screens/home_screen.dart
-
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:npk_s_v2/models/ai_advice.dart';
 import 'package:path/path.dart' as p;
 
 import '../models/soil_data.dart';
-import '../models/crop_prediction.dart'; // <-- THE FIX IS HERE
 import '../services/file_processing_service.dart';
-import '../services/gemini_service.dart';
-import '../services/prediction_service.dart';
 import 'widgets/app_bar.dart';
-import 'widgets/stat_card.dart';
+import 'soil_chemistry_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -25,40 +19,14 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  SoilData? _soilData;
   bool _isLoadingFile = false;
   String? _errorMessage;
+  final FileProcessingService _fileProcessingService = FileProcessingService();
 
-  late final GeminiService _geminiService;
-  late final FileProcessingService _fileProcessingService;
-  late final PredictionService _predictionService;
-
-  bool _isPredicting = false;
-  bool _isGettingAdvice = false;
-  PredictionResponse? _cropPrediction;
-  AiAdvice? _aiAdvice;
-
-  @override
-  void initState() {
-    super.initState();
-    const apiKey = String.fromEnvironment('GEMINI_API_KEY');
-    if (apiKey.isEmpty) {
-      throw AssertionError(
-        'GEMINI_API_KEY is not set. Run with --dart-define-from-file=config.json',
-      );
-    }
-    _geminiService = GeminiService(apiKey);
-    _fileProcessingService = FileProcessingService();
-    _predictionService = PredictionService();
-  }
-
-  Future<void> _pickAndProcessFile() async {
+  Future<void> _openDataFile() async {
     setState(() {
       _isLoadingFile = true;
       _errorMessage = null;
-      _soilData = null;
-      _cropPrediction = null;
-      _aiAdvice = null;
     });
 
     try {
@@ -74,27 +42,30 @@ class _HomeScreenState extends State<HomeScreen> {
         Uint8List? fileBytes =
             kIsWeb ? file.bytes : await File(file.path!).readAsBytes();
 
+        if (fileBytes == null) throw Exception("Could not read file bytes.");
+
         SoilData? processedData;
         if (fileExtension == '.xlsx') {
-          processedData = _fileProcessingService.processExcelData(fileBytes!);
+          processedData = _fileProcessingService.processExcelData(fileBytes);
         } else if (fileExtension == '.csv') {
           processedData = await _fileProcessingService.processCsvData(
-            fileBytes!,
+            fileBytes,
           );
         } else {
           throw Exception("Unsupported file type.");
         }
 
-        setState(() {
-          _soilData = processedData;
-          if (_soilData == null) {
-            _errorMessage = "Could not find a valid row in the file.";
-          }
-        });
-      } else {
-        setState(() {
-          _errorMessage = "File selection cancelled.";
-        });
+        if (processedData != null) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder:
+                  (context) => SoilChemistryScreen(initialData: processedData!),
+            ),
+          );
+        } else {
+          throw Exception("Could not find a valid row in the file.");
+        }
       }
     } catch (e) {
       setState(() {
@@ -107,430 +78,94 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _predictBestCrop() async {
-    if (_soilData == null) return;
-    setState(() {
-      _isPredicting = true;
-      _errorMessage = null;
-      _cropPrediction = null;
-    });
-
-    try {
-      final result = await _predictionService.predictCrop(_soilData!);
-      setState(() {
-        _cropPrediction = result;
-      });
-    } catch (e) {
-      setState(() {
-        _errorMessage = e.toString();
-      });
-    } finally {
-      setState(() {
-        _isPredicting = false;
-      });
-    }
-  }
-
-  Future<void> _getGeneralAiAdvice() async {
-    if (_soilData == null) return;
-    setState(() {
-      _isGettingAdvice = true;
-      _errorMessage = null;
-      _aiAdvice = null;
-    });
-
-    final result = await _geminiService.getSoilCareAdvice(_soilData!);
-
-    setState(() {
-      _aiAdvice = result;
-      _isGettingAdvice = false;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const CustomAppBar(),
-      body: _soilData == null ? _buildWaitingView() : _buildResultsView(),
-    );
-  }
-
-  Widget _buildWaitingView() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            SizedBox(
-              width: 150,
-              height: 150,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Center(
-                    child:
-                        _isLoadingFile
-                            ? CircularProgressIndicator(
-                              strokeWidth: 6,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Theme.of(context).primaryColor,
-                              ),
-                            )
-                            : Container(),
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.grey.shade300, width: 6),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 32),
-            Text(
-              "Waiting for Sensor",
-              style: GoogleFonts.poppins(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              "Place the sensor in the soil, or select a data file to begin.",
-              textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                color: Colors.grey.shade600,
-              ),
-            ),
-            if (_errorMessage != null) ...[
-              const SizedBox(height: 16),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
               Text(
-                _errorMessage!,
-                style: const TextStyle(color: Colors.red),
-                textAlign: TextAlign.center,
-              ),
-            ],
-            const SizedBox(height: 48),
-            ElevatedButton(
-              onPressed: _isLoadingFile ? null : _pickAndProcessFile,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).primaryColor,
-                minimumSize: const Size(double.infinity, 50),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: Text(
-                _isLoadingFile ? "Processing..." : "Open File",
+                "Choose an Input Method",
                 style: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-            TextButton(
-              onPressed: () {},
-              child: Text(
-                "Input Manually",
-                style: GoogleFonts.poppins(color: Colors.grey.shade700),
+              const SizedBox(height: 40),
+              _buildInputButton(
+                icon: Icons.sensors,
+                label: "Connect to Sensor",
+                onPressed: () {
+                  /* Placeholder for sensor logic */
+                },
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildResultsView() {
-    bool isAnyActionLoading = _isPredicting || _isGettingAdvice;
-
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            _buildSectionTitle("✅ Soil Analysis Complete"),
-            const SizedBox(height: 16),
-            GridView.count(
-              crossAxisCount: 3,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              childAspectRatio: 1.2,
-              children: [
-                StatCard(
-                  title: "pH Level",
-                  value: _soilData?.ph?.toStringAsFixed(1) ?? 'N/A',
-                  unit: "",
-                  range: "Optimal Range: 5.5-7.5)",
-                  rangeMin: 5,
-                  rangeMax: 7,
-                ),
-                StatCard(
-                  title: "Nitrogen",
-                  value: _soilData?.nMgKg?.toStringAsFixed(0) ?? 'N/A',
-                  unit: "mg/kg",
-                  range: "Optimal Range: 15-40",
-                  rangeMin: 15,
-                  rangeMax: 40,
-                ),
-                StatCard(
-                  title: "Phosphorus",
-                  value: _soilData?.pMgKg?.toStringAsFixed(0) ?? 'N/A',
-                  unit: "mg/kg",
-                  range: "Optimal Range: 15-50",
-                  rangeMin: 15,
-                  rangeMax: 50,
-                ),
-                StatCard(
-                  title: "Potassium",
-                  value: _soilData?.kMgKg?.toStringAsFixed(0) ?? 'N/A',
-                  unit: "mg/kg",
-                  range: "Optimal Range: 200-400",
-                  rangeMin: 200,
-                  rangeMax: 400,
-                ),
-                StatCard(
-                  title: "Moisture",
-                  value: _soilData?.hum?.toStringAsFixed(0) ?? 'N/A',
-                  unit: "%",
-                  range: "Optimal Range: 30-60%",
-                  rangeMin: 30,
-                  rangeMax: 60,
-                ),
-              ],
-            ),
-            if (_cropPrediction != null) ...[
-              const SizedBox(height: 24),
-              _buildSectionTitle("🖥 Custom Model Prediction"),
-              const SizedBox(height: 16),
-              _buildPredictionResultCard(_cropPrediction!),
-            ],
-            if (_aiAdvice != null) ...[
-              const SizedBox(height: 24),
-              _buildSectionTitle("🤖 General AI Advice"),
-              const SizedBox(height: 16),
-              _buildAiAdviceCard(_aiAdvice!),
-            ],
-            if (_errorMessage != null) ...[
-              const SizedBox(height: 16),
-              Center(
-                child: Text(
+              const SizedBox(height: 20),
+              _buildInputButton(
+                icon: Icons.edit_document,
+                label: "Input Manually",
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder:
+                          (context) =>
+                              SoilChemistryScreen(initialData: SoilData()),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 20),
+              _buildInputButton(
+                icon: Icons.upload_file,
+                label: _isLoadingFile ? "Processing..." : "Open Data File",
+                onPressed: _isLoadingFile ? null : _openDataFile,
+                child:
+                    _isLoadingFile
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : null,
+              ),
+              if (_errorMessage != null) ...[
+                const SizedBox(height: 20),
+                Text(
                   _errorMessage!,
                   style: const TextStyle(color: Colors.red),
                   textAlign: TextAlign.center,
                 ),
-              ),
+              ],
             ],
-            const SizedBox(height: 32),
-            if (isAnyActionLoading)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: CircularProgressIndicator(),
-                ),
-              )
-            else
-              Column(
-                children: [
-                  ElevatedButton(
-                    onPressed: _predictBestCrop,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).primaryColor,
-                      minimumSize: const Size(double.infinity, 50),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: Text(
-                      "Predict Best Crop",
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  ElevatedButton(
-                    onPressed: _getGeneralAiAdvice,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blueGrey,
-                      minimumSize: const Size(double.infinity, 50),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: Text(
-                      "Get General AI Advice",
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildPredictionResultCard(PredictionResponse predictionResponse) {
-    return Column(
-      children:
-          predictionResponse.predictions.map((prediction) {
-            return Card(
-              elevation: 1,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Family: ${prediction.cropFamily}",
-                      style: GoogleFonts.poppins(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      "Confidence: ${(prediction.familyConfidence * 100).toStringAsFixed(1)}%",
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                    const Divider(height: 24),
-                    Text(
-                      "Top Recommendations:",
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    ...prediction.topCrops.map(
-                      (crop) => ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: const Icon(Icons.grass, color: Colors.green),
-                        title: Text(
-                          crop.specificCrop,
-                          style: GoogleFonts.poppins(),
-                        ),
-                        trailing: Text(
-                          "${(crop.confidence * 100).toStringAsFixed(1)}%",
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }).toList(),
-    );
-  }
-
-  Widget _buildAiAdviceCard(AiAdvice advice) {
-    return Card(
-      color: Colors.blueGrey.shade50,
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.blueGrey.shade100),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              advice.title,
-              style: GoogleFonts.poppins(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.blueGrey.shade800,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              advice.summary,
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                color: Colors.blueGrey.shade700,
-              ),
-            ),
-            const Divider(height: 24),
-
-            if (advice.actionableSteps.isNotEmpty) ...[
-              Text(
-                "Actionable Steps:",
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 8),
-              ...advice.actionableSteps.map(
-                (step) => ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Icon(
-                    Icons.check_circle_outline,
-                    color: Colors.green.shade600,
-                  ),
-                  title: Text(step, style: GoogleFonts.poppins()),
-                ),
-              ),
-            ],
-
-            if (advice.thingsToAvoid.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              Text(
-                "Things to Avoid:",
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 8),
-              ...advice.thingsToAvoid.map(
-                (item) => ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Icon(
-                    Icons.highlight_off,
-                    color: Colors.red.shade400,
-                  ),
-                  title: Text(item, style: GoogleFonts.poppins()),
-                ),
-              ),
-            ],
-          ],
+  Widget _buildInputButton({
+    required IconData icon,
+    required String label,
+    VoidCallback? onPressed,
+    Widget? child,
+  }) {
+    return ElevatedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, color: Colors.white),
+      label: Text(
+        label,
+        style: GoogleFonts.poppins(
+          color: Colors.white,
+          fontWeight: FontWeight.w600,
+          fontSize: 16,
         ),
       ),
-    );
-  }
-
-  Widget _buildSectionTitle(String title) {
-    return Text(
-      title,
-      style: GoogleFonts.poppins(
-        fontSize: 18,
-        fontWeight: FontWeight.bold,
-        color: const Color.fromARGB(255, 24, 104, 0),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Theme.of(context).primaryColor,
+        minimumSize: const Size(double.infinity, 60),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
+      //child: child,
     );
   }
 }
