@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import '../models/soil_data.dart';
-import 'widgets/app_bar.dart';
+import 'widgets/form_app_bar.dart';
+import 'widgets/soil_guide_modal.dart';
 import 'location_climate_screen.dart';
 
 class SoilPropertiesScreen extends StatefulWidget {
@@ -17,6 +19,7 @@ class _SoilPropertiesScreenState extends State<SoilPropertiesScreen> {
   final _formKey = GlobalKey<FormState>();
   late SoilData _soilData;
 
+  // Dropdown options
   final List<String> _soilTypes = [
     'Beach sand',
     'Silty clay',
@@ -68,6 +71,19 @@ class _SoilPropertiesScreenState extends State<SoilPropertiesScreen> {
 
   void _onNext() {
     if (_formKey.currentState!.validate()) {
+      // Add a check to ensure sand, silt, and clay sum to 100 if all are entered
+      final sand = double.tryParse(_sandController.text) ?? 0;
+      final silt = double.tryParse(_siltController.text) ?? 0;
+      final clay = double.tryParse(_clayController.text) ?? 0;
+      if (sand + silt + clay != 100 && sand + silt + clay != 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Sand, Silt, and Clay content must sum to 100%'),
+          ),
+        );
+        return;
+      }
+
       setState(() {
         _soilData.soilType = _selectedSoilType;
         _soilData.soilTextureGroup = _selectedTextureGroup;
@@ -94,7 +110,12 @@ class _SoilPropertiesScreenState extends State<SoilPropertiesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomAppBar(),
+      appBar: const FormAppBar(
+        title: "AGRI-SENSE",
+        subtitle: "Personalized Crop Recommendations",
+        progress: 2 / 3,
+      ),
+      backgroundColor: Colors.white,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -103,75 +124,117 @@ class _SoilPropertiesScreenState extends State<SoilPropertiesScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "Step 2: Soil Properties",
+                "Soil Properties",
                 style: GoogleFonts.poppins(
-                  fontSize: 22,
+                  fontSize: 24,
                   fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                "Describe the physical characteristics of your soil.",
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  color: Colors.grey.shade600,
                 ),
               ),
               const SizedBox(height: 24),
 
-              _buildDropdown(
-                "Soil Type",
-                "Select a soil type",
-                _soilTypes,
-                _selectedSoilType,
-                (val) => setState(() => _selectedSoilType = val),
+              _buildSectionCard(
+                icon: Icons.terrain,
+                iconColor: Colors.brown,
+                title: "Soil Composition",
+                subtitle: "Define the soil's classification",
+                trailing: IconButton(
+                  onPressed: () => _showSoilGuideModal(context),
+                  icon: const Icon(Icons.help_outline, color: Colors.blue),
+                ),
+                fields: [
+                  _buildDropdown(
+                    "Soil Type",
+                    "Select a soil type",
+                    _soilTypes,
+                    _selectedSoilType,
+                    (val) => setState(() => _selectedSoilType = val),
+                  ),
+                  _buildDropdown(
+                    "Soil Texture Group",
+                    "Select a texture group",
+                    _textureGroups,
+                    _selectedTextureGroup,
+                    (val) => setState(() => _selectedTextureGroup = val),
+                  ),
+                ],
               ),
-              _buildDropdown(
-                "Soil Texture Group",
-                "Select a texture group",
-                _textureGroups,
-                _selectedTextureGroup,
-                (val) => setState(() => _selectedTextureGroup = val),
-              ),
-
-              _buildTextField(
-                "Sand Content",
-                "%",
-                _sandController,
-                isNumeric: true,
-              ),
-              _buildTextField(
-                "Silt Content",
-                "%",
-                _siltController,
-                isNumeric: true,
-              ),
-              _buildTextField(
-                "Clay Content",
-                "%",
-                _clayController,
-                isNumeric: true,
-              ),
-
-              SwitchListTile(
-                title: Text("Is the soil loamy?", style: GoogleFonts.poppins()),
-                value: _isLoam,
-                onChanged: (val) => setState(() => _isLoam = val),
-                activeThumbColor: Theme.of(context).primaryColor,
-                contentPadding: EdgeInsets.zero,
-              ),
-
               const SizedBox(height: 16),
-              _buildTextField(
-                "Existing Crops",
-                "",
-                _existingCropsController,
-                isOptional: true,
+              _buildSectionCard(
+                icon: Icons.grain,
+                iconColor: Colors.orangeAccent,
+                title: "Texture Details",
+                subtitle: "Percentages of sand, silt, and clay",
+                fields: [
+                  _buildTextField(
+                    label: "Sand Content",
+                    hint: "e.g., 40",
+                    unit: "%",
+                    controller: _sandController,
+                  ),
+                  _buildTextField(
+                    label: "Silt Content",
+                    hint: "e.g., 40",
+                    unit: "%",
+                    controller: _siltController,
+                  ),
+                  _buildTextField(
+                    label: "Clay Content",
+                    hint: "e.g., 20",
+                    unit: "%",
+                    controller: _clayController,
+                  ),
+                  SwitchListTile(
+                    title: Text(
+                      "Is the soil loamy?",
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey.shade700,
+                      ),
+                    ),
+                    value: _isLoam,
+                    onChanged: (val) => setState(() => _isLoam = val),
+                    activeColor: const Color.fromARGB(255, 93, 168, 115),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+                  ),
+                ],
               ),
-              _buildTextField(
-                "Primary Crop (Optional)",
-                "",
-                _primaryCropController,
-                isOptional: true,
+              const SizedBox(height: 16),
+              _buildSectionCard(
+                icon: Icons.history,
+                iconColor: Colors.purple,
+                title: "Crop History",
+                subtitle: "Information about previous or current crops",
+                fields: [
+                  _buildTextField(
+                    label: "Existing Crops",
+                    hint: "e.g., Corn, Wheat",
+                    unit: "",
+                    controller: _existingCropsController,
+                    isOptional: true,
+                  ),
+                  _buildTextField(
+                    label: "Primary Crop",
+                    hint: "e.g., Rice",
+                    unit: "",
+                    controller: _primaryCropController,
+                    isOptional: true,
+                  ),
+                ],
               ),
 
               const SizedBox(height: 32),
               ElevatedButton(
                 onPressed: _onNext,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).primaryColor,
+                  backgroundColor: const Color.fromARGB(255, 93, 168, 115),
                   minimumSize: const Size(double.infinity, 50),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -193,7 +256,58 @@ class _SoilPropertiesScreenState extends State<SoilPropertiesScreen> {
     );
   }
 
-  // Helper widget for creating dropdowns consistently
+  void _showSoilGuideModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => const SoilGuideModal(),
+    );
+  }
+
+  // Reusable helper widgets for consistent styling
+  Widget _buildSectionCard({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String subtitle,
+    required List<Widget> fields,
+    Widget? trailing, //For the icon modal trigger ito et
+  }) {
+    return Card(
+      elevation: 2,
+      shadowColor: Colors.grey.withOpacity(0.2),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(icon, color: iconColor, size: 32),
+              title: Text(
+                title,
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+              subtitle: Text(
+                subtitle,
+                style: GoogleFonts.poppins(fontSize: 12),
+              ),
+              trailing: trailing,
+            ),
+            const Divider(height: 24),
+            ...fields,
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildDropdown(
     String label,
     String hint,
@@ -203,64 +317,146 @@ class _SoilPropertiesScreenState extends State<SoilPropertiesScreen> {
   ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
-      child: DropdownButtonFormField<String>(
-        initialValue: selectedValue,
-        onChanged: onChanged,
-        decoration: InputDecoration(
-          labelText: label,
-          hintText: hint,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-        items:
-            items.map((String value) {
-              return DropdownMenuItem<String>(
-                value: value,
-                child: Text(value, overflow: TextOverflow.ellipsis),
-              );
-            }).toList(),
-        validator: (value) {
-          if (value == null) {
-            return 'Please select an option';
-          }
-          return null;
-        },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w600,
+              color: Colors.grey.shade700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<String>(
+            value: selectedValue,
+            onChanged: onChanged,
+            hint: Text(
+              hint,
+              style: GoogleFonts.poppins(color: Colors.grey.shade400),
+            ),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: Colors.grey.shade50,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade200),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade200),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: const Color.fromARGB(255, 93, 168, 115),
+                  width: 2,
+                ),
+              ),
+            ),
+            items:
+                items.map((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value, overflow: TextOverflow.ellipsis),
+                  );
+                }).toList(),
+            validator:
+                (value) => value == null ? 'Please select an option' : null,
+          ),
+        ],
       ),
     );
   }
 
-  // Helper widget for creating text fields consistently
-  Widget _buildTextField(
-    String label,
-    String unit,
-    TextEditingController controller, {
+  Widget _buildTextField({
+    required String label,
+    required String hint,
+    required String unit,
+    required TextEditingController controller,
     bool isOptional = false,
-    bool isNumeric = false,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
-      child: TextFormField(
-        controller: controller,
-        keyboardType:
-            isNumeric
-                ? const TextInputType.numberWithOptions(decimal: true)
-                : TextInputType.text,
-        decoration: InputDecoration(
-          labelText: label,
-          suffixText: unit,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-        validator: (value) {
-          if (!isOptional && (value == null || value.isEmpty)) {
-            return 'This field cannot be empty';
-          }
-          if (isNumeric &&
-              value != null &&
-              value.isNotEmpty &&
-              double.tryParse(value) == null) {
-            return 'Please enter a valid number';
-          }
-          return null;
-        },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                label,
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade700,
+                ),
+              ),
+              if (isOptional)
+                Padding(
+                  padding: const EdgeInsets.only(left: 8.0),
+                  child: Chip(
+                    label: const Text("Optional"),
+                    labelStyle: const TextStyle(fontSize: 10),
+                    backgroundColor: Colors.grey.shade200,
+                    padding: EdgeInsets.zero,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          TextFormField(
+            controller: controller,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: GoogleFonts.poppins(color: Colors.grey.shade400),
+              filled: true,
+              fillColor: Colors.grey.shade50,
+              suffixIcon:
+                  unit.isNotEmpty
+                      ? Padding(
+                        padding: const EdgeInsets.only(right: 12.0),
+                        child: Text(
+                          unit,
+                          style: GoogleFonts.poppins(
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      )
+                      : null,
+              suffixIconConstraints: const BoxConstraints(
+                minWidth: 0,
+                minHeight: 0,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade200),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade200),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: const Color.fromARGB(255, 93, 168, 115),
+                  width: 2,
+                ),
+              ),
+            ),
+            validator: (value) {
+              if (!isOptional && (value == null || value.isEmpty)) {
+                return 'This field is required';
+              }
+              if (value != null &&
+                  value.isNotEmpty &&
+                  double.tryParse(value) == null) {
+                return 'Please enter a valid number';
+              }
+              return null;
+            },
+          ),
+        ],
       ),
     );
   }

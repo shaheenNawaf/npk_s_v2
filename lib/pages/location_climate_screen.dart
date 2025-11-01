@@ -1,10 +1,9 @@
-// lib/screens/location_climate_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import '../models/soil_data.dart';
 import '../services/climate_service.dart';
-import 'widgets/app_bar.dart';
+import 'widgets/form_app_bar.dart';
 import 'results_screen.dart';
 
 class LocationClimateScreen extends StatefulWidget {
@@ -43,12 +42,10 @@ class _LocationClimateScreenState extends State<LocationClimateScreen> {
       _errorMessage = null;
     });
     try {
-      // Step 1: Get Location
       final position = await _climateService.getCurrentLocation();
       _latController.text = position.latitude.toStringAsFixed(4);
       _lonController.text = position.longitude.toStringAsFixed(4);
 
-      // Step 2: Get Climate Data from NASA POWER API
       final climateData = await _climateService.fetchClimateData(
         position.latitude,
         position.longitude,
@@ -89,11 +86,12 @@ class _LocationClimateScreenState extends State<LocationClimateScreen> {
         _soilData.avgPrecipitation = double.tryParse(_precipController.text);
       });
 
-      Navigator.push(
+      Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
           builder: (context) => ResultsScreen(soilData: _soilData),
         ),
+        (Route<dynamic> route) => false, //clears previous data btw
       );
     }
   }
@@ -101,7 +99,12 @@ class _LocationClimateScreenState extends State<LocationClimateScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomAppBar(),
+      appBar: const FormAppBar(
+        title: "AGRI-SENSE",
+        subtitle: "Personalized Crop Recommendations",
+        progress: 3 / 3,
+      ),
+      backgroundColor: Colors.white,
       body: _isLoading ? _buildLoadingView() : _buildFormView(),
     );
   }
@@ -111,11 +114,16 @@ class _LocationClimateScreenState extends State<LocationClimateScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const CircularProgressIndicator(),
+          const CircularProgressIndicator(
+            color: Color.fromARGB(255, 93, 168, 115),
+          ),
           const SizedBox(height: 20),
           Text(
             "Fetching location & climate data...",
-            style: GoogleFonts.poppins(fontSize: 16),
+            style: GoogleFonts.poppins(
+              fontSize: 16,
+              color: Colors.grey.shade700,
+            ),
           ),
         ],
       ),
@@ -131,13 +139,22 @@ class _LocationClimateScreenState extends State<LocationClimateScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "Step 3: Location and Climate",
+              "Location & Climate",
               style: GoogleFonts.poppins(
-                fontSize: 22,
+                fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
+            Text(
+              "We've automatically fetched your local data. You can adjust the values if needed.",
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                color: Colors.grey.shade600,
+              ),
+            ),
+            const SizedBox(height: 24),
+
             if (_errorMessage != null) ...[
               Text(
                 "Could not auto-fetch data: $_errorMessage\nPlease enter values manually.",
@@ -145,20 +162,51 @@ class _LocationClimateScreenState extends State<LocationClimateScreen> {
               ),
               const SizedBox(height: 16),
             ],
-            _buildTextField("Latitude", "(-90 to 90)", _latController),
-            _buildTextField("Longitude", "(-180 to 180)", _lonController),
-            _buildTextField("Average Temperature", "°C", _tempController),
-            _buildTextField("Average Humidity", "%", _humidityController),
-            _buildTextField(
-              "Average Precipitation",
-              "mm/year",
-              _precipController,
+
+            _buildSectionCard(
+              icon: Icons.location_on,
+              iconColor: Colors.redAccent,
+              title: "Geographic & Climate Data",
+              subtitle: "Auto-fetched from your device & NASA POWER",
+              fields: [
+                _buildTextField(
+                  label: "Latitude",
+                  hint: "-90 to 90",
+                  unit: "°",
+                  controller: _latController,
+                ),
+                _buildTextField(
+                  label: "Longitude",
+                  hint: "-180 to 180",
+                  unit: "°",
+                  controller: _lonController,
+                ),
+                _buildTextField(
+                  label: "Average Temperature",
+                  hint: "e.g., 27",
+                  unit: "°C",
+                  controller: _tempController,
+                ),
+                _buildTextField(
+                  label: "Average Humidity",
+                  hint: "e.g., 80",
+                  unit: "%",
+                  controller: _humidityController,
+                ),
+                _buildTextField(
+                  label: "Average Precipitation",
+                  hint: "e.g., 2000",
+                  unit: "mm/year",
+                  controller: _precipController,
+                ),
+              ],
             ),
+
             const SizedBox(height: 32),
             ElevatedButton(
               onPressed: _onAnalyze,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).primaryColor,
+                backgroundColor: const Color.fromARGB(255, 93, 168, 115),
                 minimumSize: const Size(double.infinity, 50),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -179,27 +227,105 @@ class _LocationClimateScreenState extends State<LocationClimateScreen> {
     );
   }
 
-  Widget _buildTextField(
-    String label,
-    String unit,
-    TextEditingController controller,
-  ) {
+  Widget _buildSectionCard({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String subtitle,
+    required List<Widget> fields,
+  }) {
+    return Card(
+      elevation: 2,
+      shadowColor: Colors.grey.withOpacity(0.2),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(icon, color: iconColor, size: 32),
+              title: Text(
+                title,
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+              subtitle: Text(
+                subtitle,
+                style: GoogleFonts.poppins(fontSize: 12),
+              ),
+            ),
+            const Divider(height: 24),
+            ...fields,
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required String label,
+    required String hint,
+    required String unit,
+    required TextEditingController controller,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
-      child: TextFormField(
-        controller: controller,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        decoration: InputDecoration(
-          labelText: label,
-          suffixText: unit,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'This field is required';
-          }
-          return null;
-        },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w600,
+              color: Colors.grey.shade700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextFormField(
+            controller: controller,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: GoogleFonts.poppins(color: Colors.grey.shade400),
+              filled: true,
+              fillColor: Colors.grey.shade50,
+              suffixIcon: Padding(
+                padding: const EdgeInsets.only(right: 12.0),
+                child: Text(
+                  unit,
+                  style: GoogleFonts.poppins(color: Colors.grey.shade600),
+                ),
+              ),
+              suffixIconConstraints: const BoxConstraints(
+                minWidth: 0,
+                minHeight: 0,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade200),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade200),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: const Color.fromARGB(255, 93, 168, 115),
+                  width: 2,
+                ),
+              ),
+            ),
+            validator:
+                (value) =>
+                    (value == null || value.isEmpty)
+                        ? 'This field is required'
+                        : null,
+          ),
+        ],
       ),
     );
   }

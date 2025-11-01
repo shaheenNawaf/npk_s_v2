@@ -11,24 +11,6 @@ class PredictionService {
   final String _baseUrl = "http://192.168.1.10:8000/predict";
 
   Future<PredictionResponse> predictCrop(SoilData soilData) async {
-    // ***
-    // MOCK IMPLEMENTATION FOR UI TESTING (Remove this block for production)
-    // ***
-    // print("--- Using Mock Prediction Data ---");
-    // await Future.delayed(const Duration(seconds: 2)); // Simulate network delay
-    // final mockJson = {
-    //   "crop_family": "Legumes",
-    //   "family_confidence": 0.89,
-    //   "top_crops": [
-    //     {"specific_crop": "Soybean", "confidence": 0.92},
-    //     {"specific_crop": "Mung Bean", "confidence": 0.85},
-    //   ],
-    // };
-    // return CropPrediction.fromJson(mockJson);
-
-    // ***
-    // REAL IMPLEMENTATION (Use this when your backend is ready)
-    // ***
     print("--- Calling Real Prediction Endpoint ---");
     try {
       final response = await http.post(

@@ -8,7 +8,6 @@ import 'package:path/path.dart' as p;
 
 import '../models/soil_data.dart';
 import '../services/file_processing_service.dart';
-import 'widgets/app_bar.dart';
 import 'soil_chemistry_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -44,27 +43,21 @@ class _HomeScreenState extends State<HomeScreen> {
 
         if (fileBytes == null) throw Exception("Could not read file bytes.");
 
-        SoilData? processedData;
-        if (fileExtension == '.xlsx') {
-          processedData = _fileProcessingService.processExcelData(fileBytes);
-        } else if (fileExtension == '.csv') {
-          processedData = await _fileProcessingService.processCsvData(
-            fileBytes,
-          );
-        } else {
-          throw Exception("Unsupported file type.");
-        }
+        SoilData? processedData =
+            fileExtension == '.xlsx'
+                ? _fileProcessingService.processExcelData(fileBytes)
+                : await _fileProcessingService.processCsvData(fileBytes);
 
-        if (processedData != null) {
+        if (processedData != null && mounted) {
           Navigator.push(
             context,
             MaterialPageRoute(
               builder:
-                  (context) => SoilChemistryScreen(initialData: processedData!),
+                  (context) => SoilChemistryScreen(initialData: processedData),
             ),
           );
         } else {
-          throw Exception("Could not find a valid row in the file.");
+          throw Exception("Could not find valid data in the file.");
         }
       }
     } catch (e) {
@@ -72,100 +65,251 @@ class _HomeScreenState extends State<HomeScreen> {
         _errorMessage = "Error: ${e.toString()}";
       });
     } finally {
-      setState(() {
-        _isLoadingFile = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoadingFile = false;
+        });
+      }
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: const CustomAppBar(),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                "Choose an Input Method",
-                style: GoogleFonts.poppins(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 40),
-              _buildInputButton(
-                icon: Icons.sensors,
-                label: "Connect to Sensor",
-                onPressed: () {
-                  /* Placeholder for sensor logic */
-                },
-              ),
-              const SizedBox(height: 20),
-              _buildInputButton(
-                icon: Icons.edit_document,
-                label: "Input Manually",
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder:
-                          (context) =>
-                              SoilChemistryScreen(initialData: SoilData()),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 20),
-              _buildInputButton(
-                icon: Icons.upload_file,
-                label: _isLoadingFile ? "Processing..." : "Open Data File",
-                onPressed: _isLoadingFile ? null : _openDataFile,
-                child:
-                    _isLoadingFile
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : null,
-              ),
-              if (_errorMessage != null) ...[
-                const SizedBox(height: 20),
-                Text(
-                  _errorMessage!,
-                  style: const TextStyle(color: Colors.red),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ],
-          ),
-        ),
+  void _enterManually() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SoilChemistryScreen(initialData: SoilData()),
       ),
     );
   }
 
-  Widget _buildInputButton({
-    required IconData icon,
-    required String label,
-    VoidCallback? onPressed,
-    Widget? child,
-  }) {
-    return ElevatedButton.icon(
-      onPressed: onPressed,
-      icon: Icon(icon, color: Colors.white),
-      label: Text(
-        label,
-        style: GoogleFonts.poppins(
-          color: Colors.white,
-          fontWeight: FontWeight.w600,
-          fontSize: 16,
+  void _connectSensor() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Sensor functionality coming soon!")),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final Color primaryGreen = const Color.fromARGB(255, 93, 168, 115);
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Stack(
+        children: [
+          //Curved Eme
+          ClipPath(
+            clipper: HeaderClipper(),
+            child: Container(
+              height: MediaQuery.of(context).size.height * 0.45,
+              color: primaryGreen,
+            ),
+          ),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Column(
+                children: [
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.40,
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Text("🌱", style: TextStyle(fontSize: 55)),
+                              const SizedBox(width: 12),
+                              Text(
+                                "AGRI-SENSE",
+                                style: GoogleFonts.poppins(
+                                  color: Colors.white,
+                                  fontSize: 45,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                            ),
+                            child: Text(
+                              "Personalized crop recommendations based on your soil analysis and environmental data",
+                              textAlign: TextAlign.start,
+                              style: GoogleFonts.poppins(
+                                color: Colors.white.withOpacity(0.9),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 35),
+                  Text(
+                    "Choose an Input Method",
+                    style: GoogleFonts.poppins(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF333333),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "How would you like to share your data?",
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  _InputMethodButton(
+                    title: "Connect Your Sensor",
+                    subtitle: "Real-time soil data via IoT device",
+                    icon: Icons.sensors,
+                    onTap: _connectSensor,
+                    color: primaryGreen,
+                  ),
+                  const SizedBox(height: 16),
+                  _InputMethodButton(
+                    title: "Enter Data Manually",
+                    subtitle: "Input your soil parameters by hand",
+                    icon: Icons.edit_note,
+                    onTap: _enterManually,
+                    color: primaryGreen,
+                  ),
+                  const SizedBox(height: 16),
+                  _InputMethodButton(
+                    title: "Upload Data File",
+                    subtitle: "Import from existing test results",
+                    icon: Icons.upload_file,
+                    onTap: _isLoadingFile ? null : _openDataFile,
+                    isLoading: _isLoadingFile,
+                    color: primaryGreen,
+                  ),
+                  if (_errorMessage != null) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      _errorMessage!,
+                      style: const TextStyle(color: Colors.red),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class HeaderClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    var path = Path();
+    path.lineTo(0, size.height - 50);
+    path.quadraticBezierTo(
+      size.width / 2,
+      size.height,
+      size.width,
+      size.height - 50,
+    );
+    path.lineTo(size.width, 0);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
+}
+
+class _InputMethodButton extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final VoidCallback? onTap;
+  final bool isLoading;
+  final Color color;
+
+  const _InputMethodButton({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.onTap,
+    this.isLoading = false,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: color,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child:
+                    isLoading
+                        ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                        : Icon(icon, color: Colors.white, size: 24),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    Text(
+                      subtitle,
+                      style: GoogleFonts.poppins(
+                        color: Colors.white.withOpacity(0.9),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.arrow_forward_ios,
+                color: Colors.white,
+                size: 16,
+              ),
+            ],
+          ),
         ),
       ),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Theme.of(context).primaryColor,
-        minimumSize: const Size(double.infinity, 60),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-      //child: child,
     );
   }
 }
