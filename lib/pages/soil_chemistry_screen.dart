@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../models/soil_data.dart';
+import '../services/mock_data_service.dart';
 import 'widgets/form_app_bar.dart';
 import 'soil_properties_screen.dart';
 
@@ -67,18 +68,21 @@ class _SoilChemistryScreenState extends State<SoilChemistryScreen> {
   }
 
   void _useTypicalValues() {
+    final mockData = MockDataService.getMockSoilData();
     setState(() {
-      _controllers['nMgKg']?.text = '25';
-      _controllers['pMgKg']?.text = '20';
-      _controllers['kMgKg']?.text = '150';
-      _controllers['ph']?.text = '6.5';
-      _controllers['hum']?.text = '25';
-      _controllers['tempC']?.text = '22';
-      _controllers['conductivityUsCm']?.text = '0.5';
-      _controllers['calcium']?.text = '1500';
-      _controllers['magnesium']?.text = '300';
-      _controllers['sodium']?.text = '50';
-      _controllers['exchangeableK']?.text = '120';
+      _controllers['nMgKg']?.text = mockData.nMgKg?.toString() ?? '';
+      _controllers['pMgKg']?.text = mockData.pMgKg?.toString() ?? '';
+      _controllers['kMgKg']?.text = mockData.kMgKg?.toString() ?? '';
+      _controllers['ph']?.text = mockData.ph?.toString() ?? '';
+      _controllers['hum']?.text = mockData.hum?.toString() ?? '';
+      _controllers['tempC']?.text = mockData.tempC?.toString() ?? '';
+      _controllers['conductivityUsCm']?.text =
+          mockData.conductivityUsCm?.toString() ?? '';
+      _controllers['calcium']?.text = mockData.calcium?.toString() ?? '';
+      _controllers['magnesium']?.text = mockData.magnesium?.toString() ?? '';
+      _controllers['sodium']?.text = mockData.sodium?.toString() ?? '';
+      _controllers['exchangeableK']?.text =
+          mockData.exchangeableK?.toString() ?? '';
     });
   }
 
@@ -88,6 +92,18 @@ class _SoilChemistryScreenState extends State<SoilChemistryScreen> {
         _soilData.nMgKg = double.tryParse(_controllers['nMgKg']!.text);
         _soilData.pMgKg = double.tryParse(_controllers['pMgKg']!.text);
         _soilData.kMgKg = double.tryParse(_controllers['kMgKg']!.text);
+        _soilData.ph = double.tryParse(_controllers['ph']!.text);
+        _soilData.hum = double.tryParse(_controllers['hum']!.text);
+        _soilData.tempC = double.tryParse(_controllers['tempC']!.text);
+        _soilData.conductivityUsCm = double.tryParse(
+          _controllers['conductivityUsCm']!.text,
+        );
+        _soilData.calcium = double.tryParse(_controllers['calcium']!.text);
+        _soilData.magnesium = double.tryParse(_controllers['magnesium']!.text);
+        _soilData.sodium = double.tryParse(_controllers['sodium']!.text);
+        _soilData.exchangeableK = double.tryParse(
+          _controllers['exchangeableK']!.text,
+        );
       });
 
       Navigator.push(

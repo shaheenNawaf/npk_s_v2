@@ -8,6 +8,7 @@ import 'package:path/path.dart' as p;
 
 import '../models/soil_data.dart';
 import '../services/file_processing_service.dart';
+import '../services/prediction_service.dart';
 import 'soil_chemistry_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -21,6 +22,34 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoadingFile = false;
   String? _errorMessage;
   final FileProcessingService _fileProcessingService = FileProcessingService();
+  final PredictionService _predictionService = PredictionService();
+
+  bool _isCheckingBackend = true;
+  bool _backendHealthy = false;
+  String _backendMessage = 'Checking backend connection...';
+
+  @override
+  void initState() {
+    super.initState();
+    _checkBackendHealth();
+  }
+
+  Future<void> _checkBackendHealth() async {
+    setState(() {
+      _isCheckingBackend = true;
+      _backendMessage = 'Checking backend connection...';
+    });
+
+    final healthCheck = await _predictionService.checkHealth();
+
+    if (mounted) {
+      setState(() {
+        _isCheckingBackend = false;
+        _backendHealthy = healthCheck['status'] as bool;
+        _backendMessage = healthCheck['message'] as String;
+      });
+    }
+  }
 
   Future<void> _openDataFile() async {
     setState(() {
@@ -152,6 +181,73 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   const SizedBox(height: 35),
+                  // Backend Health Status Indicator
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: _isCheckingBackend
+                          ? Colors.blue.shade50
+                          : _backendHealthy
+                              ? Colors.green.shade50
+                              : Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: _isCheckingBackend
+                            ? Colors.blue.shade200
+                            : _backendHealthy
+                                ? Colors.green.shade200
+                                : Colors.red.shade200,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        if (_isCheckingBackend)
+                          SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.blue.shade700,
+                            ),
+                          )
+                        else
+                          Icon(
+                            _backendHealthy ? Icons.check_circle : Icons.error,
+                            color: _backendHealthy
+                                ? Colors.green.shade700
+                                : Colors.red.shade700,
+                            size: 20,
+                          ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _backendMessage,
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: _isCheckingBackend
+                                  ? Colors.blue.shade900
+                                  : _backendHealthy
+                                      ? Colors.green.shade900
+                                      : Colors.red.shade900,
+                            ),
+                          ),
+                        ),
+                        if (!_isCheckingBackend)
+                          IconButton(
+                            icon: Icon(
+                              Icons.refresh,
+                              size: 18,
+                              color: _backendHealthy
+                                  ? Colors.green.shade700
+                                  : Colors.red.shade700,
+                            ),
+                            onPressed: _checkBackendHealth,
+                            tooltip: 'Retry connection',
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
                   Text(
                     "Choose an Input Method",
                     style: GoogleFonts.poppins(
