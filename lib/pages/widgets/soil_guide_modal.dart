@@ -1,13 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'dart:io';
-
-File step1Image = File("/lib/assets/soil_guide/step_1.png");
-File step2Image = File("/lib/assets/soil_guide/step_2.png");
-File step3Image = File("/lib/assets/soil_guide/step_3.png");
-File step4Image = File("/lib/assets/soil_guide/step_4.png");
-File step5Image = File("/lib/assets/soil_guide/step_5.png");
-File step6Image = File("/lib/assets/soil_guide/step_6.png");
 
 class SoilGuideModal extends StatelessWidget {
   const SoilGuideModal({super.key});
@@ -52,7 +44,7 @@ class SoilGuideModal extends StatelessWidget {
               _buildGuideSection(
                 context,
                 icon: Icons.water_drop,
-                image: Image.asset("assets/step_1.png", fit: BoxFit.cover),
+                imageLocation: 'assets/step_1.png',
                 title: "Step 1: Wet the Soil",
                 content:
                     "Take a small, representative sample of your soil (about a tablespoon). Slowly add water drop by drop and knead it until it has a moist, putty-like consistency.",
@@ -61,7 +53,7 @@ class SoilGuideModal extends StatelessWidget {
               _buildGuideSection(
                 context,
                 icon: Icons.waving_hand,
-                image: Image.asset("assets/step_5.png", fit: BoxFit.cover),
+                imageLocation: 'assets/step_5.png',
                 title: "Step 2: Form a Ribbon",
                 content:
                     "Squeeze the moist soil between your thumb and forefinger to form a 'ribbon.' Pay attention to how long the ribbon can get before it breaks.",
@@ -70,7 +62,7 @@ class SoilGuideModal extends StatelessWidget {
               _buildGuideSection(
                 context,
                 icon: Icons.science,
-                image: Image.asset("assets/step_6.png", fit: BoxFit.cover),
+                imageLocation: 'assets/step_6.png',
                 title: "Step 3: Interpret the Results",
                 content:
                     "Use the feel and ribbon length to determine the texture group:",
@@ -101,7 +93,7 @@ class SoilGuideModal extends StatelessWidget {
     required IconData icon,
     required String title,
     required String content,
-    Widget? image,
+    required String imageLocation,
     List<Widget> children = const [],
   }) {
     return Padding(
@@ -122,6 +114,7 @@ class SoilGuideModal extends StatelessWidget {
               ),
             ],
           ),
+          Image.asset(imageLocation, fit: BoxFit.cover),
           const SizedBox(height: 8),
           Text(
             content,
