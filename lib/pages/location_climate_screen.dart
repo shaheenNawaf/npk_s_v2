@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-
 import '../models/soil_data.dart';
 import '../services/climate_service.dart';
-import '../services/mock_data_service.dart';
 import 'widgets/form_app_bar.dart';
 import 'results_screen.dart';
 
@@ -19,7 +17,7 @@ class LocationClimateScreen extends StatefulWidget {
 class _LocationClimateScreenState extends State<LocationClimateScreen> {
   final _formKey = GlobalKey<FormState>();
   late SoilData _soilData;
-  final ClimateService _climateService = ClimateService();
+  late final ClimateService _climateService;
 
   bool _isLoading = true;
   String? _errorMessage;
@@ -34,6 +32,16 @@ class _LocationClimateScreenState extends State<LocationClimateScreen> {
   void initState() {
     super.initState();
     _soilData = widget.soilData;
+
+    // Securely retrieve the key and initialize the service.
+    const nasaApiKey = String.fromEnvironment('NASA_API_KEY');
+    if (nasaApiKey.isEmpty) {
+      throw AssertionError(
+        'NASA_API_KEY is not set. Update config.json and run with the --dart-define flag.',
+      );
+    }
+    _climateService = ClimateService(nasaApiKey);
+
     _fetchDataAndPopulateFields();
   }
 
@@ -44,13 +52,15 @@ class _LocationClimateScreenState extends State<LocationClimateScreen> {
     });
     try {
       final position = await _climateService.getCurrentLocation();
-      _latController.text = position.latitude.toStringAsFixed(4);
-      _lonController.text = position.longitude.toStringAsFixed(4);
 
-      final climateData = await _climateService.fetchClimateData(
-        position.latitude,
-        position.longitude,
-      );
+      final double lat = double.parse(position.latitude.toStringAsFixed(4));
+      final double long = double.parse(position.longitude.toStringAsFixed(4));
+
+      _latController.text = lat.toString();
+      _lonController.text = long.toString();
+
+      final climateData = await _climateService.fetchClimateData(lat, long);
+
       _tempController.text = climateData['avgTempC']!.toStringAsFixed(1);
       _humidityController.text = climateData['avgHumidity']!.toStringAsFixed(1);
       _precipController.text = climateData['avgPrecipitation']!.toStringAsFixed(
@@ -61,9 +71,11 @@ class _LocationClimateScreenState extends State<LocationClimateScreen> {
         _errorMessage = e.toString();
       });
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -75,68 +87,6 @@ class _LocationClimateScreenState extends State<LocationClimateScreen> {
     _humidityController.dispose();
     _precipController.dispose();
     super.dispose();
-  }
-
-  void _useTypicalValues() {
-    final mockData = MockDataService.getMockSoilData();
-    setState(() {
-      _latController.text = mockData.latitude?.toStringAsFixed(4) ?? '';
-      _lonController.text = mockData.longitude?.toStringAsFixed(4) ?? '';
-      _tempController.text = mockData.avgTempC?.toStringAsFixed(1) ?? '';
-      _humidityController.text = mockData.avgHumidity?.toStringAsFixed(1) ?? '';
-      _precipController.text =
-          mockData.avgPrecipitation?.toStringAsFixed(0) ?? '';
-    });
-  }
-
-  Future<void> _useMockLocation() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      // Use Manila, Philippines as mock location
-      final mockData = MockDataService.getMockSoilData();
-      final latitude = mockData.latitude!;
-      final longitude = mockData.longitude!;
-
-      _latController.text = latitude.toStringAsFixed(4);
-      _lonController.text = longitude.toStringAsFixed(4);
-
-      // Fetch real climate data from NASA API for this mock location
-      final climateData = await _climateService.fetchClimateData(
-        latitude,
-        longitude,
-      );
-      _tempController.text = climateData['avgTempC']!.toStringAsFixed(1);
-      _humidityController.text = climateData['avgHumidity']!.toStringAsFixed(1);
-      _precipController.text = climateData['avgPrecipitation']!.toStringAsFixed(
-        0,
-      );
-
-      setState(() {
-        _isLoading = false;
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Mock location loaded: Manila, Philippines (${latitude.toStringAsFixed(2)}, ${longitude.toStringAsFixed(2)})',
-            ),
-            backgroundColor: const Color.fromARGB(255, 93, 168, 115),
-          ),
-        );
-      }
-    } catch (e) {
-      setState(() {
-        _errorMessage = e.toString();
-        _isLoading = false;
-      });
-      // If NASA API fails, just use the mock values
-      _useTypicalValues();
-    }
   }
 
   void _onAnalyze() {
@@ -154,7 +104,7 @@ class _LocationClimateScreenState extends State<LocationClimateScreen> {
         MaterialPageRoute(
           builder: (context) => ResultsScreen(soilData: _soilData),
         ),
-        (Route<dynamic> route) => false, //clears previous data btw
+        (Route<dynamic> route) => false,
       );
     }
   }
@@ -174,52 +124,28 @@ class _LocationClimateScreenState extends State<LocationClimateScreen> {
 
   Widget _buildLoadingView() {
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const CircularProgressIndicator(
-              color: Color.fromARGB(255, 93, 168, 115),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const CircularProgressIndicator(
+            color: Color.fromARGB(255, 93, 168, 115),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            "Fetching location & climate data...",
+            style: GoogleFonts.poppins(
+              fontSize: 16,
+              color: Colors.grey.shade700,
             ),
-            const SizedBox(height: 20),
-            Text(
-              "Fetching location & climate data...",
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                color: Colors.grey.shade700,
-              ),
-            ),
-            const SizedBox(height: 32),
-            Text(
-              "Taking too long?",
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                color: Colors.grey.shade600,
-              ),
-            ),
-            const SizedBox(height: 12),
-            ElevatedButton.icon(
-              onPressed: _useMockLocation,
-              icon: const Icon(Icons.location_city, size: 18),
-              label: const Text("Use Mock Location (Manila)"),
-              style: ElevatedButton.styleFrom(
-                foregroundColor: Colors.white,
-                backgroundColor: const Color(0xFF7E57C2),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildFormView() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(24.0),
       child: Form(
         key: _formKey,
         child: Column(
@@ -243,77 +169,12 @@ class _LocationClimateScreenState extends State<LocationClimateScreen> {
             const SizedBox(height: 24),
 
             if (_errorMessage != null) ...[
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.red.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.red.shade200),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.warning_amber_rounded, color: Colors.red.shade700),
-                        const SizedBox(width: 8),
-                        Text(
-                          "Could not auto-fetch data",
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.red.shade700,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _errorMessage!,
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: Colors.red.shade900,
-                      ),
-                    ),
-                  ],
-                ),
+              Text(
+                "Could not auto-fetch data: $_errorMessage\nPlease enter values manually.",
+                style: const TextStyle(color: Colors.red),
               ),
               const SizedBox(height: 16),
             ],
-
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: _useMockLocation,
-                    icon: const Icon(Icons.location_city, size: 18),
-                    label: const Text("Use Mock Location"),
-                    style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      backgroundColor: const Color(0xFF7E57C2),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: _useTypicalValues,
-                    icon: const Icon(Icons.science_outlined, size: 18),
-                    label: const Text("Use Test Values"),
-                    style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      backgroundColor: const Color(0xFF7E57C2),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
 
             _buildSectionCard(
               icon: Icons.location_on,
