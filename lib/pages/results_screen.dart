@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-
-//Other Imports char
+import 'home_screen.dart';
 import '../models/soil_data.dart';
 import '../models/crop_prediction.dart';
 import '../models/ai_advice.dart';
 import '../services/gemini_service.dart';
 import '../services/prediction_service.dart';
-import 'widgets/app_bar.dart';
+import 'widgets/app_bar.dart'; // Assuming you have this custom widget
 
 class ResultsScreen extends StatefulWidget {
   final SoilData soilData;
@@ -31,8 +30,6 @@ class _ResultsScreenState extends State<ResultsScreen> {
   @override
   void initState() {
     super.initState();
-
-    // Correctly initializes Gemini Service with the API key
     const apiKey = String.fromEnvironment('GEMINI_API_KEY');
     if (apiKey.isEmpty) {
       throw AssertionError(
@@ -40,7 +37,6 @@ class _ResultsScreenState extends State<ResultsScreen> {
       );
     }
     _geminiService = GeminiService(apiKey);
-
     _predictionService = PredictionService();
   }
 
@@ -75,8 +71,6 @@ class _ResultsScreenState extends State<ResultsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    bool isAnyActionLoading = _isPredicting || _isGettingAdvice;
-
     return Scaffold(
       appBar: const CustomAppBar(),
       body: SingleChildScrollView(
@@ -84,72 +78,10 @@ class _ResultsScreenState extends State<ResultsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // _buildSectionTitle("Soil Analysis Complete"),
-            // const SizedBox(height: 16),
-            // GridView.count(
-            //   crossAxisCount: 3,
-            //   shrinkWrap: true,
-            //   physics: const NeverScrollableScrollPhysics(),
-            //   mainAxisSpacing: 12,
-            //   crossAxisSpacing: 12,
-            //   childAspectRatio: 1.2,
-            //   children: [
-            //     StatCard(
-            //       title: "Potassium",
-            //       value: widget.soilData.kMgKg?.toStringAsFixed(0) ?? 'N/A',
-            //       unit: "mg/kg",
-            //       range: "Optimal: 100-200",
-            //       rangeMin: 100,
-            //       rangeMax: 200,
-            //     ),
-            //     StatCard(
-            //       title: "Phosphorus",
-            //       value: widget.soilData.pMgKg?.toStringAsFixed(0) ?? 'N/A',
-            //       unit: "mg/kg",
-            //       range: "Optimal: 30-50",
-            //       rangeMin: 30,
-            //       rangeMax: 50,
-            //     ),
-            //     StatCard(
-            //       title: "Nitrogen",
-            //       value: widget.soilData.nMgKg?.toStringAsFixed(0) ?? 'N/A',
-            //       unit: "mg/kg",
-            //       range: "Optimal: 25-50",
-            //       rangeMin: 25,
-            //       rangeMax: 50,
-            //     ),
-            //     StatCard(
-            //       title: "Moisture",
-            //       value: widget.soilData.hum?.toStringAsFixed(0) ?? 'N/A',
-            //       unit: "%",
-            //       range: "Optimal: 40-60",
-            //       rangeMin: 40,
-            //       rangeMax: 60,
-            //     ),
-            //     StatCard(
-            //       title: "pH Level",
-            //       value: widget.soilData.ph?.toStringAsFixed(1) ?? 'N/A',
-            //       unit: "",
-            //       range: "Optimal: 6.0-7.0",
-            //       rangeMin: 6.0,
-            //       rangeMax: 7.0,
-            //     ),
-            //     StatCard(
-            //       title: "OM",
-            //       value:
-            //           widget.soilData.organicMatter?.toStringAsFixed(1) ??
-            //           'N/A',
-            //       unit: "%",
-            //       range: "Optimal: 2-6",
-            //       rangeMin: 2,
-            //       rangeMax: 6,
-            //     ),
-            //   ],
-            // ),
-            // const SizedBox(height: 24),
             _buildSectionTitle("Complete Soil Data Summary"),
             const SizedBox(height: 16),
             _buildDataSummaryCard(),
+
             if (_predictionResponse != null) ...[
               const SizedBox(height: 24),
               _buildSectionTitle(
@@ -158,6 +90,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
               const SizedBox(height: 16),
               _buildPredictionResultCard(_predictionResponse!),
             ],
+
             if (_aiAdvice != null) ...[
               const SizedBox(height: 24),
               _buildSectionTitle("General AI Advice"),
@@ -175,97 +108,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
               ),
             ],
             const SizedBox(height: 32),
-            if (isAnyActionLoading)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: CircularProgressIndicator(),
-                ),
-              )
-            else
-              Column(
-                children: [
-                  Container(
-                    width: double.infinity,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          const Color(0xFF2E7D32),
-                          const Color(0xFF66BB6A),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF2E7D32).withValues(alpha: 0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: ElevatedButton.icon(
-                      onPressed: _predictBestCrop,
-                      icon: const Icon(Icons.agriculture, color: Colors.white),
-                      label: Text(
-                        "Predict Best Crop",
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        shadowColor: Colors.transparent,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    width: double.infinity,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          const Color(0xFF1976D2),
-                          const Color(0xFF42A5F5),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF1976D2).withValues(alpha: 0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: ElevatedButton.icon(
-                      onPressed: _getGeneralAiAdvice,
-                      icon: const Icon(Icons.psychology, color: Colors.white),
-                      label: Text(
-                        "Get General AI Advice",
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        shadowColor: Colors.transparent,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            _buildActionButtons(),
           ],
         ),
       ),
@@ -279,10 +122,97 @@ class _ResultsScreenState extends State<ResultsScreen> {
     );
   }
 
-  Widget _buildPredictionResultCard(PredictionResponse response) {
+  Widget _buildActionButtons() {
+    bool isAnyActionLoading = _isPredicting || _isGettingAdvice;
+    if (isAnyActionLoading) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(8.0),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
     return Column(
       children: [
-        // Model Info Card
+        _buildGradientButton(
+          onPressed: _predictBestCrop,
+          icon: Icons.agriculture,
+          label: "Predict Best Crop",
+          gradientColors: [const Color(0xFF2E7D32), const Color(0xFF66BB6A)],
+        ),
+        const SizedBox(height: 12),
+        _buildGradientButton(
+          onPressed: _getGeneralAiAdvice,
+          icon: Icons.psychology,
+          label: "Get General AI Advice",
+          gradientColors: [const Color(0xFF1976D2), const Color(0xFF42A5F5)],
+        ),
+        const SizedBox(height: 12),
+        _buildGradientButton(
+          onPressed: () {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const HomeScreen()),
+              (Route<dynamic> route) => false,
+            );
+          },
+          icon: Icons.home,
+          label: "Return to Home",
+          gradientColors: [
+            const Color.fromARGB(255, 173, 25, 210),
+            const Color.fromARGB(255, 209, 66, 245),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGradientButton({
+    required VoidCallback onPressed,
+    required IconData icon,
+    required String label,
+    required List<Color> gradientColors,
+  }) {
+    return Container(
+      width: double.infinity,
+      height: 56,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(colors: gradientColors),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: gradientColors[0].withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ElevatedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, color: Colors.white),
+        label: Text(
+          label,
+          style: GoogleFonts.poppins(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+            fontSize: 16,
+          ),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPredictionResultCard(PredictionResponse response) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
         Card(
           color: Colors.blue.shade50,
           elevation: 0,
@@ -310,8 +240,6 @@ class _ResultsScreenState extends State<ResultsScreen> {
           ),
         ),
         const SizedBox(height: 12),
-
-        // Top Recommendation Card
         Card(
           margin: const EdgeInsets.only(bottom: 12),
           elevation: 2,
@@ -395,8 +323,6 @@ class _ResultsScreenState extends State<ResultsScreen> {
             ),
           ),
         ),
-
-        // Alternative Recommendations
         if (response.alternativeRecommendations.isNotEmpty) ...[
           Text(
             "Alternative Recommendations",
@@ -427,18 +353,12 @@ class _ResultsScreenState extends State<ResultsScreen> {
                   "${alt.family} • ${alt.suitability}",
                   style: GoogleFonts.poppins(fontSize: 12),
                 ),
-                trailing: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      "${(alt.overallConfidence * 100).toStringAsFixed(1)}%",
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
+                trailing: Text(
+                  "${(alt.overallConfidence * 100).toStringAsFixed(1)}%",
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
                 ),
               ),
             );
@@ -547,9 +467,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Soil Chemistry Section
             _buildSummarySection(
               "Soil Chemistry",
               Icons.science,
@@ -588,7 +506,6 @@ class _ResultsScreenState extends State<ResultsScreen> {
               ],
             ),
             const Divider(height: 24),
-            // Soil Properties Section
             _buildSummarySection(
               "Soil Properties",
               Icons.terrain,
@@ -600,21 +517,9 @@ class _ResultsScreenState extends State<ResultsScreen> {
                   widget.soilData.soilTextureGroup,
                   "",
                 ),
-                _buildDataRow(
-                  "Sand Content",
-                  widget.soilData.sandContent,
-                  "(0-3 scale)",
-                ),
-                _buildDataRow(
-                  "Silt Content",
-                  widget.soilData.siltContent,
-                  "(0-3 scale)",
-                ),
-                _buildDataRow(
-                  "Clay Content",
-                  widget.soilData.clayContent,
-                  "(0-3 scale)",
-                ),
+                _buildDataRow("Sand Content", widget.soilData.sandContent, "%"),
+                _buildDataRow("Silt Content", widget.soilData.siltContent, "%"),
+                _buildDataRow("Clay Content", widget.soilData.clayContent, "%"),
                 _buildDataRow(
                   "Existing Crops",
                   widget.soilData.existingCrops,
@@ -624,7 +529,6 @@ class _ResultsScreenState extends State<ResultsScreen> {
               ],
             ),
             const Divider(height: 24),
-            // Location & Climate Section
             _buildSummarySection(
               "Location & Climate",
               Icons.location_on,
@@ -657,12 +561,9 @@ class _ResultsScreenState extends State<ResultsScreen> {
     Color color,
     List<Widget> rows,
   ) {
-    // Filter out null rows
     final validRows =
         rows.where((row) => row != const SizedBox.shrink()).toList();
-
     if (validRows.isEmpty) return const SizedBox.shrink();
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -687,30 +588,25 @@ class _ResultsScreenState extends State<ResultsScreen> {
   }
 
   Widget _buildDataRow(String label, dynamic value, String unit) {
-    // Handle null values
     if (value == null) return const SizedBox.shrink();
-
     String displayValue;
     if (value is double) {
-      // For 0-3 scale values (sand, silt, clay content), show as integer
-      if (unit.contains("0-3 scale") && value == value.toInt()) {
+      if (value == value.toInt()) {
         displayValue = value.toInt().toString();
       } else {
         displayValue = value.toStringAsFixed(2);
       }
-    } else if (value is String) {
-      displayValue = value;
     } else {
       displayValue = value.toString();
     }
-
+    if (displayValue.isEmpty) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Expanded(
-            flex: 2,
+            flex: 3,
             child: Text(
               label,
               style: GoogleFonts.poppins(
@@ -720,7 +616,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
             ),
           ),
           Expanded(
-            flex: 1,
+            flex: 2,
             child: Text(
               "$displayValue ${unit.isNotEmpty ? unit : ''}",
               style: GoogleFonts.poppins(

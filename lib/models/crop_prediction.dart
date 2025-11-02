@@ -1,5 +1,3 @@
-// lib/models/crop_prediction.dart
-
 class PredictionResponse {
   final String status;
   final String modelType;
@@ -28,9 +26,15 @@ class PredictionResponse {
       topRecommendation: TopRecommendation.fromJson(
         summary['top_recommendation'] as Map<String, dynamic>,
       ),
-      alternativeRecommendations: (summary['alternative_recommendations'] as List?)
-          ?.map((i) => AlternativeRecommendation.fromJson(i as Map<String, dynamic>))
-          .toList() ?? [],
+      alternativeRecommendations:
+          (summary['alternative_recommendations'] as List?)
+              ?.map(
+                (i) => AlternativeRecommendation.fromJson(
+                  i as Map<String, dynamic>,
+                ),
+              )
+              .toList() ??
+          [],
     );
   }
 }
@@ -52,7 +56,8 @@ class TopRecommendation {
     return TopRecommendation(
       crop: json['crop'] ?? 'Unknown',
       family: json['family'] ?? 'Unknown',
-      overallConfidence: (json['overall_confidence'] as num?)?.toDouble() ?? 0.0,
+      overallConfidence:
+          (json['overall_confidence'] as num?)?.toDouble() ?? 0.0,
       suitability: json['suitability'] ?? 'Unknown',
     );
   }
@@ -75,7 +80,8 @@ class AlternativeRecommendation {
     return AlternativeRecommendation(
       crop: json['crop'] ?? 'Unknown',
       family: json['family'] ?? 'Unknown',
-      overallConfidence: (json['overall_confidence'] as num?)?.toDouble() ?? 0.0,
+      overallConfidence:
+          (json['overall_confidence'] as num?)?.toDouble() ?? 0.0,
       suitability: json['suitability'] ?? 'Unknown',
     );
   }
