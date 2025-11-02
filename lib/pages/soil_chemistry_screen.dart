@@ -24,7 +24,6 @@ class _SoilChemistryScreenState extends State<SoilChemistryScreen> {
   void initState() {
     super.initState();
     _soilData = widget.initialData;
-    // Initialize all controllers, same as before
     _controllers['nMgKg'] = TextEditingController(
       text: _soilData.nMgKg?.toString() ?? '',
     );
@@ -58,6 +57,27 @@ class _SoilChemistryScreenState extends State<SoilChemistryScreen> {
     _controllers['exchangeableK'] = TextEditingController(
       text: _soilData.exchangeableK?.toString() ?? '',
     );
+    _controllers['sulfur'] = TextEditingController(
+      text: _soilData.sulfur?.toString() ?? '',
+    );
+    _controllers['organicMatter'] = TextEditingController(
+      text: _soilData.organicMatter?.toString() ?? '',
+    );
+    _controllers['copper'] = TextEditingController(
+      text: _soilData.copper?.toString() ?? '',
+    );
+    _controllers['zinc'] = TextEditingController(
+      text: _soilData.zinc?.toString() ?? '',
+    );
+    _controllers['iron'] = TextEditingController(
+      text: _soilData.iron?.toString() ?? '',
+    );
+    _controllers['manganese'] = TextEditingController(
+      text: _soilData.manganese?.toString() ?? '',
+    );
+    _controllers['boron'] = TextEditingController(
+      text: _soilData.boron?.toString() ?? '',
+    );
   }
 
   @override
@@ -88,6 +108,27 @@ class _SoilChemistryScreenState extends State<SoilChemistryScreen> {
         _soilData.nMgKg = double.tryParse(_controllers['nMgKg']!.text);
         _soilData.pMgKg = double.tryParse(_controllers['pMgKg']!.text);
         _soilData.kMgKg = double.tryParse(_controllers['kMgKg']!.text);
+        _soilData.ph = double.tryParse(_controllers['ph']!.text);
+        _soilData.hum = double.tryParse(_controllers['hum']!.text);
+        _soilData.tempC = double.tryParse(_controllers['tempC']!.text);
+        _soilData.conductivityUsCm = double.tryParse(
+          _controllers['conductivityUsCm']!.text,
+        );
+        _soilData.calcium = double.tryParse(_controllers['calcium']!.text);
+        _soilData.magnesium = double.tryParse(_controllers['magnesium']!.text);
+        _soilData.sodium = double.tryParse(_controllers['sodium']!.text);
+        _soilData.exchangeableK = double.tryParse(
+          _controllers['exchangeableK']!.text,
+        );
+        _soilData.sulfur = double.tryParse(_controllers['sulfur']!.text);
+        _soilData.organicMatter = double.tryParse(
+          _controllers['organicMatter']!.text,
+        );
+        _soilData.copper = double.tryParse(_controllers['copper']!.text);
+        _soilData.zinc = double.tryParse(_controllers['zinc']!.text);
+        _soilData.iron = double.tryParse(_controllers['iron']!.text);
+        _soilData.manganese = double.tryParse(_controllers['manganese']!.text);
+        _soilData.boron = double.tryParse(_controllers['boron']!.text);
       });
 
       Navigator.push(
