@@ -25,7 +25,6 @@ class _SoilChemistryScreenState extends State<SoilChemistryScreen> {
   void initState() {
     super.initState();
     _soilData = widget.initialData;
-    // Initialize all controllers, same as before
     _controllers['nMgKg'] = TextEditingController(
       text: _soilData.nMgKg?.toString() ?? '',
     );
@@ -58,6 +57,27 @@ class _SoilChemistryScreenState extends State<SoilChemistryScreen> {
     );
     _controllers['exchangeableK'] = TextEditingController(
       text: _soilData.exchangeableK?.toString() ?? '',
+    );
+    _controllers['sulfur'] = TextEditingController(
+      text: _soilData.sulfur?.toString() ?? '',
+    );
+    _controllers['organicMatter'] = TextEditingController(
+      text: _soilData.organicMatter?.toString() ?? '',
+    );
+    _controllers['copper'] = TextEditingController(
+      text: _soilData.copper?.toString() ?? '',
+    );
+    _controllers['zinc'] = TextEditingController(
+      text: _soilData.zinc?.toString() ?? '',
+    );
+    _controllers['iron'] = TextEditingController(
+      text: _soilData.iron?.toString() ?? '',
+    );
+    _controllers['manganese'] = TextEditingController(
+      text: _soilData.manganese?.toString() ?? '',
+    );
+    _controllers['boron'] = TextEditingController(
+      text: _soilData.boron?.toString() ?? '',
     );
   }
 
@@ -104,6 +124,15 @@ class _SoilChemistryScreenState extends State<SoilChemistryScreen> {
         _soilData.exchangeableK = double.tryParse(
           _controllers['exchangeableK']!.text,
         );
+        _soilData.sulfur = double.tryParse(_controllers['sulfur']!.text);
+        _soilData.organicMatter = double.tryParse(
+          _controllers['organicMatter']!.text,
+        );
+        _soilData.copper = double.tryParse(_controllers['copper']!.text);
+        _soilData.zinc = double.tryParse(_controllers['zinc']!.text);
+        _soilData.iron = double.tryParse(_controllers['iron']!.text);
+        _soilData.manganese = double.tryParse(_controllers['manganese']!.text);
+        _soilData.boron = double.tryParse(_controllers['boron']!.text);
       });
 
       Navigator.push(

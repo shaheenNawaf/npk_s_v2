@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:npk_s_v2/pages/sensor_screen.dart';
 import 'package:path/path.dart' as p;
 
 import '../models/soil_data.dart';
@@ -112,8 +113,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _connectSensor() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Sensor functionality coming soon!")),
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const SensorScreen()),
     );
   }
 
@@ -185,16 +187,18 @@ class _HomeScreenState extends State<HomeScreen> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: _isCheckingBackend
-                          ? Colors.blue.shade50
-                          : _backendHealthy
+                      color:
+                          _isCheckingBackend
+                              ? Colors.blue.shade50
+                              : _backendHealthy
                               ? Colors.green.shade50
                               : Colors.red.shade50,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: _isCheckingBackend
-                            ? Colors.blue.shade200
-                            : _backendHealthy
+                        color:
+                            _isCheckingBackend
+                                ? Colors.blue.shade200
+                                : _backendHealthy
                                 ? Colors.green.shade200
                                 : Colors.red.shade200,
                       ),
@@ -213,9 +217,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         else
                           Icon(
                             _backendHealthy ? Icons.check_circle : Icons.error,
-                            color: _backendHealthy
-                                ? Colors.green.shade700
-                                : Colors.red.shade700,
+                            color:
+                                _backendHealthy
+                                    ? Colors.green.shade700
+                                    : Colors.red.shade700,
                             size: 20,
                           ),
                         const SizedBox(width: 8),
@@ -224,9 +229,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             _backendMessage,
                             style: GoogleFonts.poppins(
                               fontSize: 12,
-                              color: _isCheckingBackend
-                                  ? Colors.blue.shade900
-                                  : _backendHealthy
+                              color:
+                                  _isCheckingBackend
+                                      ? Colors.blue.shade900
+                                      : _backendHealthy
                                       ? Colors.green.shade900
                                       : Colors.red.shade900,
                             ),
@@ -237,9 +243,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             icon: Icon(
                               Icons.refresh,
                               size: 18,
-                              color: _backendHealthy
-                                  ? Colors.green.shade700
-                                  : Colors.red.shade700,
+                              color:
+                                  _backendHealthy
+                                      ? Colors.green.shade700
+                                      : Colors.red.shade700,
                             ),
                             onPressed: _checkBackendHealth,
                             tooltip: 'Retry connection',

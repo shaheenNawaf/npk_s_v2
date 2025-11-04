@@ -6,7 +6,7 @@
 /// - Production: Use your production server URL
 class ApiConfig {
   // --- CHANGE THIS URL FOR YOUR ENVIRONMENT ---
-  static const String baseUrl = "http://192.168.1.20:8000";
+  static const String baseUrl = "http://31.97.220.228:8000";
 
   // API Endpoints
   static const String healthEndpoint = "/health";
