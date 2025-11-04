@@ -174,10 +174,25 @@ class _ResultsScreenState extends State<ResultsScreen> {
             ],
             const SizedBox(height: 32),
             if (isAnyActionLoading)
-              const Center(
+              Center(
                 child: Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: CircularProgressIndicator(),
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      const CircularProgressIndicator(),
+                      const SizedBox(height: 16),
+                      Text(
+                        _isPredicting
+                          ? "Analyzing ${widget.soilData.nMgKg != null ? '111' : 'available'} soil features..."
+                          : "Consulting AI for personalized advice...",
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          color: Colors.grey.shade600,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
                 ),
               )
             else
@@ -290,18 +305,39 @@ class _ResultsScreenState extends State<ResultsScreen> {
           ),
           child: Padding(
             padding: const EdgeInsets.all(12.0),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    "Model: ${response.modelType} • ${response.inputFeaturesUsed} features",
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: Colors.blue.shade900,
+                Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        "Prediction Model Information",
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.blue.shade900,
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const SizedBox(width: 28),
+                    Expanded(
+                      child: Text(
+                        "${response.modelType} • ${response.inputFeaturesUsed} comprehensive soil features analyzed",
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: Colors.blue.shade800,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

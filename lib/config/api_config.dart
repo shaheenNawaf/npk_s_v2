@@ -6,15 +6,15 @@
 /// - Production: Use your production server URL
 class ApiConfig {
   // --- CHANGE THIS URL FOR YOUR ENVIRONMENT ---
-  static const String baseUrl = "http://192.168.56.1:8000";
+  static const String baseUrl = "http://192.168.1.20:8000";
 
   // API Endpoints
   static const String healthEndpoint = "/health";
-  static const String predictDetailedEndpoint = "/predict/detailed";
+  static const String predictEndpoint = "/predict";
 
   // Full URLs (computed from base + endpoint)
   static String get healthUrl => "$baseUrl$healthEndpoint";
-  static String get predictDetailedUrl => "$baseUrl$predictDetailedEndpoint";
+  static String get predictUrl => "$baseUrl$predictEndpoint";
 
   // Timeout configurations
   static const Duration healthCheckTimeout = Duration(seconds: 5);
