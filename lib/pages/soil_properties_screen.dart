@@ -22,17 +22,40 @@ class _SoilPropertiesScreenState extends State<SoilPropertiesScreen> {
 
   // Dropdown options
   final List<String> _soilTypes = [
-    'Unknown','Sand', 'Loamy Sand', 'Sandy Loam', 'Sandy Clay Loam',
-    'Loam', 'Silt Loam', 'Silt', 'Clay Loam',
-    'Clay', 'Silty Clay', 'Sandy Clay', 'Silty Clay Loam'
-    'Peat'
+    'Unknown',
+    'Sand',
+    'Loamy Sand',
+    'Sandy Loam',
+    'Sandy Clay Loam',
+    'Loam',
+    'Silt Loam',
+    'Silt',
+    'Clay Loam',
+    'Clay',
+    'Silty Clay',
+    'Sandy Clay',
+    'Silty Clay Loam'
+        'Peat',
   ];
   final List<Map<String, String>> _textureGroups = [
     {'name': 'Unknown', 'description': 'Not yet determined'},
-    {'name': 'Coarse', 'description': 'Sandy soils - loose, gritty texture, drains quickly'},
-    {'name': 'Medium', 'description': 'Loamy soils - balanced mixture, ideal for most crops'},
-    {'name': 'Fine', 'description': 'Clay-heavy soils - smooth, sticky when wet, holds water well'},
-    {'name': 'Organic', 'description': 'Peat soils - high organic matter, very water retentive'}
+    {
+      'name': 'Coarse',
+      'description': 'Sandy soils - loose, gritty texture, drains quickly',
+    },
+    {
+      'name': 'Medium',
+      'description': 'Loamy soils - balanced mixture, ideal for most crops',
+    },
+    {
+      'name': 'Fine',
+      'description':
+          'Clay-heavy soils - smooth, sticky when wet, holds water well',
+    },
+    {
+      'name': 'Organic',
+      'description': 'Peat soils - high organic matter, very water retentive',
+    },
   ];
 
   String? _selectedSoilType;
@@ -87,7 +110,9 @@ class _SoilPropertiesScreenState extends State<SoilPropertiesScreen> {
           (clay != null && (clay < 0 || clay > 3))) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Sand, Silt, and Clay content must be between 0 and 3'),
+            content: Text(
+              'Sand, Silt, and Clay content must be between 0 and 3',
+            ),
           ),
         );
         return;
@@ -402,7 +427,7 @@ class _SoilPropertiesScreenState extends State<SoilPropertiesScreen> {
           ),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
-            initialValue: selectedValue,
+            value: selectedValue,
             onChanged: onChanged,
             hint: Text(
               hint,
@@ -436,33 +461,34 @@ class _SoilPropertiesScreenState extends State<SoilPropertiesScreen> {
                 );
               }).toList();
             },
-            items: items.map((Map<String, String> item) {
-              return DropdownMenuItem<String>(
-                value: item['name'],
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      item['name']!,
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w600,
-                      ),
-                      overflow: TextOverflow.ellipsis,
+            items:
+                items.map((Map<String, String> item) {
+                  return DropdownMenuItem<String>(
+                    value: item['name'],
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          item['name']!,
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w600,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          item['description']!,
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            color: Colors.grey.shade600,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ],
                     ),
-                    Text(
-                      item['description']!,
-                      style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        color: Colors.grey.shade600,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
+                  );
+                }).toList(),
             validator:
                 (value) => value == null ? 'Please select an option' : null,
           ),
@@ -500,8 +526,14 @@ class _SoilPropertiesScreenState extends State<SoilPropertiesScreen> {
           const SizedBox(height: 8),
           _buildLegendItem("0", "None - Component not present in soil type"),
           _buildLegendItem("1", "Some - Reserved (not currently used)"),
-          _buildLegendItem("2", "Moderate - Component mentioned (e.g., 'sandy loam', 'silty clay')"),
-          _buildLegendItem("3", "Dominant - Pure component (e.g., 'sand', 'silt', 'clay')"),
+          _buildLegendItem(
+            "2",
+            "Moderate - Component mentioned (e.g., 'sandy loam', 'silty clay')",
+          ),
+          _buildLegendItem(
+            "3",
+            "Dominant - Pure component (e.g., 'sand', 'silt', 'clay')",
+          ),
         ],
       ),
     );

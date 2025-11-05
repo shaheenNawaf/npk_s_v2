@@ -6,7 +6,7 @@ import '../models/crop_prediction.dart';
 import '../models/ai_advice.dart';
 import '../services/gemini_service.dart';
 import '../services/prediction_service.dart';
-import 'widgets/app_bar.dart'; // Assuming you have this custom widget
+import 'widgets/app_bar.dart';
 
 class ResultsScreen extends StatefulWidget {
   final SoilData soilData;
@@ -227,7 +227,11 @@ class _ResultsScreenState extends State<ResultsScreen> {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
+                    Icon(
+                      Icons.info_outline,
+                      color: Colors.blue.shade700,
+                      size: 20,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -333,7 +337,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  "Confidence: ${(response.topRecommendation.overallConfidence * 100).toStringAsFixed(1)}%",
+                  "Confidence: ${(response.topRecommendation.overallConfidence).toStringAsFixed(1)}%",
                   style: GoogleFonts.poppins(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -375,7 +379,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
                   style: GoogleFonts.poppins(fontSize: 12),
                 ),
                 trailing: Text(
-                  "${(alt.overallConfidence * 100).toStringAsFixed(1)}%",
+                  "${(alt.overallConfidence).toStringAsFixed(1)}%",
                   style: GoogleFonts.poppins(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
