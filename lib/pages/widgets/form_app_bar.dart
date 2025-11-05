@@ -41,21 +41,6 @@ class FormAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
         ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () {
-            // Logic for skipping unknown fields would go here
-            // For now, it can just proceed to the next step
-          },
-          child: Text(
-            "Skip Unknown",
-            style: GoogleFonts.poppins(
-              color: primaryGreen,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ],
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(10.0),
         child: Padding(

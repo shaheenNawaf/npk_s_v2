@@ -114,7 +114,7 @@ class PredictionService {
       return PredictionResponse(
         status: 'success',
         modelType: 'Hybrid ANN Classifier',
-        accuracyNote: 'Model outputs top 3 ranked crops by confidence.',
+        accuracyNote: 'Model outputs Top 3 Ranked crops by confidence.',
         inputFeaturesUsed: payload.length,
         topRecommendation: topRec,
         alternativeRecommendations: alternatives,
