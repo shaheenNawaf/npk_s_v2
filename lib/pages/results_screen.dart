@@ -371,7 +371,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
                   color: _getSuitabilityColor(alt.suitability),
                 ),
                 title: Text(
-                  alt.crop,
+                  alt.crop.toUpperCase(),
                   style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
                 ),
                 subtitle: Text(
