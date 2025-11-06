@@ -80,19 +80,17 @@ class PredictionService {
         .timeout(ApiConfig.predictionTimeout);
 
     if (response.statusCode == 200) {
-      final List<dynamic> responseBody = json.decode(response.body);
+      final Map<String, dynamic> responseBody = json.decode(response.body);
 
       print("✓ Crop Prediction Success!");
-      for (var item in responseBody) {
+      print("Algorithm: ${responseBody['algorithm']}");
+      print("Recommended Crop: ${responseBody['recommended_crop']}");
+      print("Top 3 Predictions:");
+      for (var item in responseBody['top_3_predictions']) {
         print("  ${item['crop']} (${item['family']}) - ${item['confidence']}%");
       }
 
-      if (responseBody.isEmpty) {
-        throw Exception("Empty response list");
-      }
-
-      // First item = top recommendation
-      final top = responseBody.first;
+      final top = responseBody['top_3_predictions'].first;
       final topRec = TopRecommendation(
         crop: top['crop'] ?? 'Unknown',
         family: top['family'] ?? 'Unknown',
@@ -100,21 +98,21 @@ class PredictionService {
         suitability: 'Highly Suitable',
       );
 
-      // Remaining items = alternatives
-      final alternatives = responseBody.skip(1).map((item) {
-        return AlternativeRecommendation(
-          crop: item['crop'] ?? 'Unknown',
-          family: item['family'] ?? 'Unknown',
-          overallConfidence: (item['confidence'] as num?)?.toDouble() ?? 0.0,
-          suitability: 'Moderately Suitable',
-        );
-      }).toList();
+      final alternatives = (responseBody['top_3_predictions'] as List)
+          .skip(1)
+          .map((item) => AlternativeRecommendation(
+                crop: item['crop'] ?? 'Unknown',
+                family: item['family'] ?? 'Unknown',
+                overallConfidence: (item['confidence'] as num?)?.toDouble() ?? 0.0,
+                suitability: 'Moderately Suitable',
+              ))
+          .toList();
 
-      // Build final response object
       return PredictionResponse(
         status: 'success',
-        modelType: 'Hybrid ANN Classifier',
-        accuracyNote: 'Model outputs Top 3 Ranked crops by confidence.',
+        modelType: responseBody['algorithm'] ?? 'Unknown',
+        accuracyNote:
+            'Algorithm accuracy: ${responseBody['algorithm_accuracy'] ?? 0.0}%',
         inputFeaturesUsed: payload.length,
         topRecommendation: topRec,
         alternativeRecommendations: alternatives,
