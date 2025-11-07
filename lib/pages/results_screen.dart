@@ -344,6 +344,15 @@ class _ResultsScreenState extends State<ResultsScreen> {
                     color: Colors.grey.shade700,
                   ),
                 ),
+                if ((response.topRecommendation.overallConfidence) <= 50)
+                  Text(
+                    "Low Confidence Rate. Please confer with a registered farmer or scientist.",
+                    style: GoogleFonts.poppins(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade700,
+                    ),
+                  ),
               ],
             ),
           ),
@@ -379,7 +388,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
                   style: GoogleFonts.poppins(fontSize: 12),
                 ),
                 trailing: Text(
-                  "${(alt.overallConfidence).toStringAsFixed(1)}%",
+                  (alt.overallConfidence).toStringAsFixed(1),
                   style: GoogleFonts.poppins(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
