@@ -291,7 +291,7 @@ class _SoilChemistryScreenState extends State<SoilChemistryScreen> {
                     label: "Manganese (Mn)",
                     hint: "e.g., 1",
                     unit: "mg/kg",
-                    controller: _controllers['iron']!,
+                    controller: _controllers['manganese']!,
                   ),
                   _buildTextField(
                     label: "Boron (B)",
