@@ -135,7 +135,10 @@ class _ResultsScreenState extends State<ResultsScreen> {
     return Column(
       children: [
         _buildGradientButton(
-          onPressed: _predictBestCrop,
+          onPressed: () {
+            _predictBestCrop();
+            seeAllRelevantData();
+          },
           icon: Icons.agriculture,
           label: "Predict Best Crop",
           gradientColors: [const Color(0xFF2E7D32), const Color(0xFF66BB6A)],
@@ -165,6 +168,30 @@ class _ResultsScreenState extends State<ResultsScreen> {
         ),
       ],
     );
+  }
+
+  void seeAllRelevantData() {
+    print("Sending these data to the Prediction Service:");
+    print("Soil Chemistry ---------");
+    print('pH: ${widget.soilData.ph}');
+    print('boron: ${widget.soilData.boron}');
+    print('calcium: ${widget.soilData.calcium}');
+    print('copper: ${widget.soilData.copper}');
+    print('exchangeable k: ${widget.soilData.exchangeableK}');
+    print('iron: ${widget.soilData.iron}');
+    print('mangesium: ${widget.soilData.magnesium}');
+    print('manganese: ${widget.soilData.manganese}');
+    print('organicmatter: ${widget.soilData.organicMatter}');
+    print('n: ${widget.soilData.nMgKg}');
+    print('p: ${widget.soilData.pMgKg}');
+    print('k: ${widget.soilData.kMgKg}');
+    print('sodium/Na: ${widget.soilData.sodium}');
+    print('sulfur/S: ${widget.soilData.sulfur}');
+    print('zinc: ${widget.soilData.zinc}');
+    print('---------');
+    print('existing crops: ${widget.soilData.existingCrops}');
+    print('primary crops: ${widget.soilData.existingCrops}');
+    print('soil type: ${widget.soilData.soilType}');
   }
 
   Widget _buildGradientButton({
