@@ -115,9 +115,6 @@ class _SensorScreenState extends State<SensorScreen> {
         pMgKg: (data['P'] as num?)?.toDouble(),
         kMgKg: (data['K'] as num?)?.toDouble(),
         ph: (data['ph'] as num?)?.toDouble(),
-        hum: (data['moisture'] as num?)?.toDouble(),
-        tempC: (data['temperature'] as num?)?.toDouble(),
-        conductivityUsCm: (data['conductivity'] as num?)?.toDouble(),
       );
 
       // Successfully parsed, now navigate

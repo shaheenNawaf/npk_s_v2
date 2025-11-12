@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:npk_s_v2/pages/results_screen.dart';
 
 import '../models/soil_data.dart';
 import '../services/mock_data_service.dart';
 import 'widgets/form_app_bar.dart';
 import 'widgets/soil_guide_modal.dart';
-import 'location_climate_screen.dart';
 
 class SoilPropertiesScreen extends StatefulWidget {
   final SoilData soilData;
@@ -88,10 +88,6 @@ class _SoilPropertiesScreenState extends State<SoilPropertiesScreen> {
     final mockData = MockDataService.getMockSoilData();
     setState(() {
       _selectedSoilType = mockData.soilType;
-      _selectedTextureGroup = mockData.soilTextureGroup;
-      _sandController.text = mockData.sandContent?.toString() ?? '';
-      _siltController.text = mockData.siltContent?.toString() ?? '';
-      _clayController.text = mockData.clayContent?.toString() ?? '';
       _existingCropsController.text = mockData.existingCrops ?? '';
       _primaryCropController.text = mockData.primaryCrop ?? '';
     });
@@ -99,31 +95,8 @@ class _SoilPropertiesScreenState extends State<SoilPropertiesScreen> {
 
   void _onNext() {
     if (_formKey.currentState!.validate()) {
-      // Validate that sand, silt, and clay values are within 0-3 range
-      final sand = double.tryParse(_sandController.text);
-      final silt = double.tryParse(_siltController.text);
-      final clay = double.tryParse(_clayController.text);
-
-      // Check if any entered values are outside the 0-3 range
-      if ((sand != null && (sand < 0 || sand > 3)) ||
-          (silt != null && (silt < 0 || silt > 3)) ||
-          (clay != null && (clay < 0 || clay > 3))) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Sand, Silt, and Clay content must be between 0 and 3',
-            ),
-          ),
-        );
-        return;
-      }
-
       setState(() {
         _soilData.soilType = _selectedSoilType;
-        _soilData.soilTextureGroup = _selectedTextureGroup;
-        _soilData.sandContent = double.tryParse(_sandController.text);
-        _soilData.siltContent = double.tryParse(_siltController.text);
-        _soilData.clayContent = double.tryParse(_clayController.text);
         _soilData.existingCrops = _existingCropsController.text;
         _soilData.primaryCrop =
             _primaryCropController.text.isNotEmpty
@@ -134,7 +107,7 @@ class _SoilPropertiesScreenState extends State<SoilPropertiesScreen> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => LocationClimateScreen(soilData: _soilData),
+          builder: (context) => ResultsScreen(soilData: _soilData),
         ),
       );
     }
@@ -146,7 +119,7 @@ class _SoilPropertiesScreenState extends State<SoilPropertiesScreen> {
       appBar: const FormAppBar(
         title: "AGRI-SENSE",
         subtitle: "Personalized Crop Recommendations",
-        progress: 2 / 3,
+        progress: 2 / 2,
       ),
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
@@ -164,15 +137,6 @@ class _SoilPropertiesScreenState extends State<SoilPropertiesScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              Text(
-                "Describe the physical characteristics of your soil.",
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: Colors.grey.shade600,
-                ),
-              ),
-              const SizedBox(height: 24),
-
               ElevatedButton.icon(
                 onPressed: _useTypicalValues,
                 icon: const Icon(Icons.science_outlined, size: 18),
@@ -203,41 +167,6 @@ class _SoilPropertiesScreenState extends State<SoilPropertiesScreen> {
                     _soilTypes,
                     _selectedSoilType,
                     (val) => setState(() => _selectedSoilType = val),
-                  ),
-                  _buildTextureGroupDropdown(
-                    "Soil Texture Group",
-                    "Select a texture group",
-                    _textureGroups,
-                    _selectedTextureGroup,
-                    (val) => setState(() => _selectedTextureGroup = val),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              _buildSectionCard(
-                icon: Icons.grain,
-                iconColor: Colors.orangeAccent,
-                title: "Texture Details",
-                subtitle: "Soil component intensity (0-3 scale)",
-                fields: [
-                  _buildScaleLegend(),
-                  _buildTextField(
-                    label: "Sand Content",
-                    hint: "0-3",
-                    unit: "",
-                    controller: _sandController,
-                  ),
-                  _buildTextField(
-                    label: "Silt Content",
-                    hint: "0-3",
-                    unit: "",
-                    controller: _siltController,
-                  ),
-                  _buildTextField(
-                    label: "Clay Content",
-                    hint: "0-3",
-                    unit: "",
-                    controller: _clayController,
                   ),
                 ],
               ),
@@ -400,177 +329,6 @@ class _SoilPropertiesScreenState extends State<SoilPropertiesScreen> {
                 }).toList(),
             validator:
                 (value) => value == null ? 'Please select an option' : null,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTextureGroupDropdown(
-    String label,
-    String hint,
-    List<Map<String, String>> items,
-    String? selectedValue,
-    ValueChanged<String?> onChanged,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.w600,
-              color: Colors.grey.shade700,
-            ),
-          ),
-          const SizedBox(height: 8),
-          DropdownButtonFormField<String>(
-            value: selectedValue,
-            onChanged: onChanged,
-            hint: Text(
-              hint,
-              style: GoogleFonts.poppins(color: Colors.grey.shade400),
-            ),
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: Colors.grey.shade50,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.shade200),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.shade200),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: const Color.fromARGB(255, 93, 168, 115),
-                  width: 2,
-                ),
-              ),
-            ),
-            selectedItemBuilder: (BuildContext context) {
-              return items.map((Map<String, String> item) {
-                return Text(
-                  item['name']!,
-                  style: GoogleFonts.poppins(),
-                  overflow: TextOverflow.ellipsis,
-                );
-              }).toList();
-            },
-            items:
-                items.map((Map<String, String> item) {
-                  return DropdownMenuItem<String>(
-                    value: item['name'],
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          item['name']!,
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w600,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Text(
-                          item['description']!,
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            color: Colors.grey.shade600,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                        ),
-                      ],
-                    ),
-                  );
-                }).toList(),
-            validator:
-                (value) => value == null ? 'Please select an option' : null,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildScaleLegend() {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16.0),
-      padding: const EdgeInsets.all(12.0),
-      decoration: BoxDecoration(
-        color: Colors.blue.shade50,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.blue.shade200),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.info_outline, size: 18, color: Colors.blue.shade700),
-              const SizedBox(width: 8),
-              Text(
-                "Soil Content Scale (0-3)",
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                  color: Colors.blue.shade900,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          _buildLegendItem("0", "None - Component not present in soil type"),
-          _buildLegendItem("1", "Some - Reserved (not currently used)"),
-          _buildLegendItem(
-            "2",
-            "Moderate - Component mentioned (e.g., 'sandy loam', 'silty clay')",
-          ),
-          _buildLegendItem(
-            "3",
-            "Dominant - Pure component (e.g., 'sand', 'silt', 'clay')",
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLegendItem(String value, String description) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 4.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 20,
-            height: 20,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: Colors.blue.shade100,
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(
-              value,
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.bold,
-                fontSize: 11,
-                color: Colors.blue.shade900,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              description,
-              style: GoogleFonts.poppins(
-                fontSize: 11,
-                color: Colors.grey.shade700,
-              ),
-            ),
           ),
         ],
       ),

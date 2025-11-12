@@ -49,7 +49,7 @@ class FormAppBar extends StatelessWidget implements PreferredSizeWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "Step ${(progress * 3).toInt()} of 3",
+                "Step ${(progress * 2).toInt()} of 2",
                 style: GoogleFonts.poppins(
                   fontSize: 12,
                   color: Colors.grey.shade600,

@@ -37,15 +37,6 @@ class _SoilChemistryScreenState extends State<SoilChemistryScreen> {
     _controllers['ph'] = TextEditingController(
       text: _soilData.ph?.toString() ?? '',
     );
-    _controllers['hum'] = TextEditingController(
-      text: _soilData.hum?.toString() ?? '',
-    );
-    _controllers['tempC'] = TextEditingController(
-      text: _soilData.tempC?.toString() ?? '',
-    );
-    _controllers['conductivityUsCm'] = TextEditingController(
-      text: _soilData.conductivityUsCm?.toString() ?? '',
-    );
     _controllers['calcium'] = TextEditingController(
       text: _soilData.calcium?.toString() ?? '',
     );
@@ -94,15 +85,19 @@ class _SoilChemistryScreenState extends State<SoilChemistryScreen> {
       _controllers['pMgKg']?.text = mockData.pMgKg?.toString() ?? '';
       _controllers['kMgKg']?.text = mockData.kMgKg?.toString() ?? '';
       _controllers['ph']?.text = mockData.ph?.toString() ?? '';
-      _controllers['hum']?.text = mockData.hum?.toString() ?? '';
-      _controllers['tempC']?.text = mockData.tempC?.toString() ?? '';
-      _controllers['conductivityUsCm']?.text =
-          mockData.conductivityUsCm?.toString() ?? '';
       _controllers['calcium']?.text = mockData.calcium?.toString() ?? '';
       _controllers['magnesium']?.text = mockData.magnesium?.toString() ?? '';
       _controllers['sodium']?.text = mockData.sodium?.toString() ?? '';
       _controllers['exchangeableK']?.text =
           mockData.exchangeableK?.toString() ?? '';
+      _controllers['organicMatter']?.text =
+          mockData.organicMatter?.toString() ?? '';
+      _controllers['sulfur']?.text = mockData.sulfur?.toString() ?? '';
+      _controllers['copper']?.text = mockData.copper?.toString() ?? '';
+      _controllers['zinc']?.text = mockData.zinc?.toString() ?? '';
+      _controllers['iron']?.text = mockData.iron?.toString() ?? '';
+      _controllers['manganese']?.text = mockData.manganese?.toString() ?? '';
+      _controllers['boron']?.text = mockData.boron?.toString() ?? '';
     });
   }
 
@@ -113,11 +108,6 @@ class _SoilChemistryScreenState extends State<SoilChemistryScreen> {
         _soilData.pMgKg = double.tryParse(_controllers['pMgKg']!.text);
         _soilData.kMgKg = double.tryParse(_controllers['kMgKg']!.text);
         _soilData.ph = double.tryParse(_controllers['ph']!.text);
-        _soilData.hum = double.tryParse(_controllers['hum']!.text);
-        _soilData.tempC = double.tryParse(_controllers['tempC']!.text);
-        _soilData.conductivityUsCm = double.tryParse(
-          _controllers['conductivityUsCm']!.text,
-        );
         _soilData.calcium = double.tryParse(_controllers['calcium']!.text);
         _soilData.magnesium = double.tryParse(_controllers['magnesium']!.text);
         _soilData.sodium = double.tryParse(_controllers['sodium']!.text);
@@ -150,7 +140,7 @@ class _SoilChemistryScreenState extends State<SoilChemistryScreen> {
       appBar: const FormAppBar(
         title: "AGRI-SENSE",
         subtitle: "Personalized Crop Recommendations",
-        progress: 1 / 3,
+        progress: 1 / 2,
       ),
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
@@ -234,34 +224,13 @@ class _SoilChemistryScreenState extends State<SoilChemistryScreen> {
                     controller: _controllers['ph']!,
                     infoTooltip: "Acidity or alkalinity of the soil",
                   ),
-                  _buildTextField(
-                    label: "Moisture",
-                    hint: "e.g., 25",
-                    unit: "%",
-                    controller: _controllers['hum']!,
-                    infoTooltip: "Amount of water in the soil",
-                  ),
-                  _buildTextField(
-                    label: "Temperature",
-                    hint: "e.g., 22",
-                    unit: "°C",
-                    controller: _controllers['tempC']!,
-                    infoTooltip: "Soil temperature",
-                  ),
-                  _buildTextField(
-                    label: "Conductivity",
-                    hint: "e.g., 0.5",
-                    unit: "dS/m",
-                    controller: _controllers['conductivityUsCm']!,
-                    isOptional: true,
-                  ),
                 ],
               ),
               const SizedBox(height: 16),
               _buildSectionCard(
                 icon: Icons.scatter_plot,
                 iconColor: Colors.orange,
-                title: "Secondary Nutrients",
+                title: "Macronutrients",
                 subtitle: "Important trace elements",
                 fields: [
                   _buildTextField(
@@ -269,28 +238,66 @@ class _SoilChemistryScreenState extends State<SoilChemistryScreen> {
                     hint: "e.g., 1500",
                     unit: "mg/kg",
                     controller: _controllers['calcium']!,
-                    isOptional: true,
                   ),
                   _buildTextField(
                     label: "Magnesium (Mg)",
                     hint: "e.g., 300",
                     unit: "mg/kg",
                     controller: _controllers['magnesium']!,
-                    isOptional: true,
                   ),
                   _buildTextField(
                     label: "Sodium (Na)",
                     hint: "e.g., 50",
                     unit: "mg/kg",
                     controller: _controllers['sodium']!,
-                    isOptional: true,
                   ),
                   _buildTextField(
                     label: "Exchangeable K",
                     hint: "e.g., 120",
                     unit: "meq/100g",
                     controller: _controllers['exchangeableK']!,
-                    isOptional: true,
+                  ),
+                  _buildTextField(
+                    label: "Sulfur",
+                    hint: "e.g., 120",
+                    unit: "mg/kg",
+                    controller: _controllers['sulfur']!,
+                  ),
+                  _buildTextField(
+                    label: "Organic Matter (OM)",
+                    hint: "e.g., 1%",
+                    unit: "%",
+                    controller: _controllers['organicMatter']!,
+                  ),
+                  _buildTextField(
+                    label: "Copper (Cu)",
+                    hint: "e.g., 1",
+                    unit: "mg/kg",
+                    controller: _controllers['copper']!,
+                  ),
+                  _buildTextField(
+                    label: "Zinc (Zn)",
+                    hint: "e.g., 1",
+                    unit: "mg/kg",
+                    controller: _controllers['zinc']!,
+                  ),
+                  _buildTextField(
+                    label: "Iron (Fe)",
+                    hint: "e.g., 1",
+                    unit: "mg/kg",
+                    controller: _controllers['iron']!,
+                  ),
+                  _buildTextField(
+                    label: "Manganese (Mn)",
+                    hint: "e.g., 1",
+                    unit: "mg/kg",
+                    controller: _controllers['iron']!,
+                  ),
+                  _buildTextField(
+                    label: "Boron (B)",
+                    hint: "e.g., 1",
+                    unit: "mg/kg",
+                    controller: _controllers['boron']!,
                   ),
                 ],
               ),

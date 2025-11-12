@@ -31,13 +31,6 @@ class FileProcessingService {
             rowMap[headers[j]] = row[j];
           }
         }
-        SoilData currentRowData = SoilData.fromMap(rowMap);
-        if (currentRowData.time != null) {
-          if (latestTime == null || currentRowData.time!.isAfter(latestTime)) {
-            latestTime = currentRowData.time;
-            tempLatestSoilData = currentRowData;
-          }
-        }
       }
     }
     return tempLatestSoilData;

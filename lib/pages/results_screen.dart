@@ -511,13 +511,6 @@ class _ResultsScreenState extends State<ResultsScreen> {
                 _buildDataRow("Phosphorus (P)", widget.soilData.pMgKg, "mg/kg"),
                 _buildDataRow("Potassium (K)", widget.soilData.kMgKg, "mg/kg"),
                 _buildDataRow("pH Level", widget.soilData.ph, ""),
-                _buildDataRow("Moisture", widget.soilData.hum, "%"),
-                _buildDataRow("Temperature", widget.soilData.tempC, "°C"),
-                _buildDataRow(
-                  "Conductivity",
-                  widget.soilData.conductivityUsCm,
-                  "µS/cm",
-                ),
                 _buildDataRow("Calcium", widget.soilData.calcium, "mg/kg"),
                 _buildDataRow("Magnesium", widget.soilData.magnesium, "mg/kg"),
                 _buildDataRow("Sodium", widget.soilData.sodium, "mg/kg"),
@@ -547,14 +540,6 @@ class _ResultsScreenState extends State<ResultsScreen> {
               [
                 _buildDataRow("Soil Type", widget.soilData.soilType, ""),
                 _buildDataRow(
-                  "Texture Group",
-                  widget.soilData.soilTextureGroup,
-                  "",
-                ),
-                _buildDataRow("Sand Content", widget.soilData.sandContent, "%"),
-                _buildDataRow("Silt Content", widget.soilData.siltContent, "%"),
-                _buildDataRow("Clay Content", widget.soilData.clayContent, "%"),
-                _buildDataRow(
                   "Existing Crops",
                   widget.soilData.existingCrops,
                   "",
@@ -563,26 +548,6 @@ class _ResultsScreenState extends State<ResultsScreen> {
               ],
             ),
             const Divider(height: 24),
-            _buildSummarySection(
-              "Location & Climate",
-              Icons.location_on,
-              Colors.blue.shade700,
-              [
-                _buildDataRow("Latitude", widget.soilData.latitude, "°"),
-                _buildDataRow("Longitude", widget.soilData.longitude, "°"),
-                _buildDataRow(
-                  "Avg Temperature",
-                  widget.soilData.avgTempC,
-                  "°C",
-                ),
-                _buildDataRow("Avg Humidity", widget.soilData.avgHumidity, "%"),
-                _buildDataRow(
-                  "Avg Precipitation",
-                  widget.soilData.avgPrecipitation,
-                  "mm/year",
-                ),
-              ],
-            ),
           ],
         ),
       ),
