@@ -189,8 +189,6 @@ class _ResultsScreenState extends State<ResultsScreen> {
     print('sulfur/S: ${widget.soilData.sulfur}');
     print('zinc: ${widget.soilData.zinc}');
     print('---------');
-    print('existing crops: ${widget.soilData.existingCrops}');
-    print('primary crops: ${widget.soilData.existingCrops}');
     print('soil type: ${widget.soilData.soilType}');
   }
 
@@ -564,15 +562,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
               "Soil Properties",
               Icons.terrain,
               Colors.brown.shade700,
-              [
-                _buildDataRow("Soil Type", widget.soilData.soilType, ""),
-                _buildDataRow(
-                  "Existing Crops",
-                  widget.soilData.existingCrops,
-                  "",
-                ),
-                _buildDataRow("Primary Crop", widget.soilData.primaryCrop, ""),
-              ],
+              [_buildDataRow("Soil Type", widget.soilData.soilType, "")],
             ),
             const Divider(height: 24),
           ],

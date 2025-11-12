@@ -21,8 +21,6 @@ class MockDataService {
 
       // Soil Properties
       soilType: 'Loam',
-      existingCrops: 'Corn, Wheat',
-      primaryCrop: 'Corn',
     );
   }
 }

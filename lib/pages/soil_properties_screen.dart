@@ -88,8 +88,6 @@ class _SoilPropertiesScreenState extends State<SoilPropertiesScreen> {
     final mockData = MockDataService.getMockSoilData();
     setState(() {
       _selectedSoilType = mockData.soilType;
-      _existingCropsController.text = mockData.existingCrops ?? '';
-      _primaryCropController.text = mockData.primaryCrop ?? '';
     });
   }
 
@@ -97,11 +95,6 @@ class _SoilPropertiesScreenState extends State<SoilPropertiesScreen> {
     if (_formKey.currentState!.validate()) {
       setState(() {
         _soilData.soilType = _selectedSoilType;
-        _soilData.existingCrops = _existingCropsController.text;
-        _soilData.primaryCrop =
-            _primaryCropController.text.isNotEmpty
-                ? _primaryCropController.text
-                : null;
       });
 
       Navigator.push(
@@ -170,32 +163,6 @@ class _SoilPropertiesScreenState extends State<SoilPropertiesScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              _buildSectionCard(
-                icon: Icons.history,
-                iconColor: Colors.purple,
-                title: "Crop History",
-                subtitle: "Information about previous or current crops",
-                fields: [
-                  _buildTextField(
-                    label: "Existing Crops",
-                    hint: "e.g., Corn, Wheat",
-                    unit: "",
-                    controller: _existingCropsController,
-                    isOptional: true,
-                    isNumeric: false,
-                  ),
-                  _buildTextField(
-                    label: "Primary Crop",
-                    hint: "e.g., Rice",
-                    unit: "",
-                    controller: _primaryCropController,
-                    isOptional: true,
-                    isNumeric: false,
-                  ),
-                ],
-              ),
-
               const SizedBox(height: 32),
               ElevatedButton(
                 onPressed: _onNext,

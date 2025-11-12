@@ -18,8 +18,6 @@ class SoilData {
   double? manganese;
   double? boron;
   String? soilType;
-  String? existingCrops;
-  String? primaryCrop;
 
   SoilData({
     this.ph,
@@ -38,8 +36,6 @@ class SoilData {
     this.manganese,
     this.boron,
     this.soilType,
-    this.existingCrops,
-    this.primaryCrop,
   });
 
   factory SoilData.fromMap(Map<String, dynamic> data) {
@@ -87,8 +83,6 @@ class SoilData {
       'manganese': manganese,
       'boron': boron,
       'soilType': soilType,
-      'existingCrops': existingCrops,
-      'primaryCrop': primaryCrop,
     };
   }
 }
