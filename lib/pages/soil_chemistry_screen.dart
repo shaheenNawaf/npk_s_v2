@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../models/soil_data.dart';
 import '../services/mock_data_service.dart';
 import 'widgets/form_app_bar.dart';
-import 'soil_properties_screen.dart';
+import 'results_screen.dart';
 
 class SoilChemistryScreen extends StatefulWidget {
   final SoilData initialData;
@@ -128,7 +128,7 @@ class _SoilChemistryScreenState extends State<SoilChemistryScreen> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => SoilPropertiesScreen(soilData: _soilData),
+          builder: (context) => ResultsScreen(soilData: _soilData),
         ),
       );
     }
@@ -139,8 +139,8 @@ class _SoilChemistryScreenState extends State<SoilChemistryScreen> {
     return Scaffold(
       appBar: const FormAppBar(
         title: "AGRI-SENSE",
-        subtitle: "Personalized Crop Recommendations",
-        progress: 1 / 2,
+        subtitle: "",
+        progress: 1.0, // Single step form now
       ),
       backgroundColor: Colors.white,
       body: SingleChildScrollView(

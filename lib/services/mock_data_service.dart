@@ -18,9 +18,7 @@ class MockDataService {
       iron: 50.0,
       manganese: 25.0,
       boron: 0.8,
-
-      // Soil Properties
-      soilType: 'Loam',
+      // soilType removed - no longer required by API
     );
   }
 }

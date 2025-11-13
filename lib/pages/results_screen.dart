@@ -189,7 +189,6 @@ class _ResultsScreenState extends State<ResultsScreen> {
     print('sulfur/S: ${widget.soilData.sulfur}');
     print('zinc: ${widget.soilData.zinc}');
     print('---------');
-    print('soil type: ${widget.soilData.soilType}');
   }
 
   Widget _buildGradientButton({
@@ -341,13 +340,14 @@ class _ResultsScreenState extends State<ResultsScreen> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                Text(
-                  "Family: ${response.topRecommendation.family}",
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: Colors.grey.shade600,
+                if (response.topRecommendation.family.isNotEmpty)
+                  Text(
+                    "Family: ${response.topRecommendation.family}",
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      color: Colors.grey.shade600,
+                    ),
                   ),
-                ),
                 const SizedBox(height: 12),
                 LinearProgressIndicator(
                   value: response.topRecommendation.overallConfidence,
@@ -409,7 +409,9 @@ class _ResultsScreenState extends State<ResultsScreen> {
                   style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
                 ),
                 subtitle: Text(
-                  "${alt.family} • ${alt.suitability}",
+                  alt.family.isNotEmpty
+                      ? "${alt.family} • ${alt.suitability}"
+                      : alt.suitability,
                   style: GoogleFonts.poppins(fontSize: 12),
                 ),
                 trailing: Text(
@@ -558,13 +560,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
               ],
             ),
             const Divider(height: 24),
-            _buildSummarySection(
-              "Soil Properties",
-              Icons.terrain,
-              Colors.brown.shade700,
-              [_buildDataRow("Soil Type", widget.soilData.soilType, "")],
-            ),
-            const Divider(height: 24),
+            // Soil Properties section removed - soil type no longer required
           ],
         ),
       ),
