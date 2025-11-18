@@ -22,21 +22,21 @@ class _ResultsScreenState extends State<ResultsScreen> {
   late final PredictionService _predictionService;
 
   bool _isPredicting = false;
-  bool _isGettingAdvice = false;
+  // bool _isGettingAdvice = false;
   PredictionResponse? _predictionResponse;
-  AiAdvice? _aiAdvice;
+  // AiAdvice? _aiAdvice;
   String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
-    const apiKey = String.fromEnvironment('GEMINI_API_KEY');
-    if (apiKey.isEmpty) {
-      throw AssertionError(
-        'GEMINI_API_KEY is not set. Please create config.json and run with --dart-define-from-file=config.json',
-      );
-    }
-    _geminiService = GeminiService(apiKey);
+    // const apiKey = String.fromEnvironment('GEMINI_API_KEY');
+    // if (apiKey.isEmpty) {
+    //   throw AssertionError(
+    //     'GEMINI_API_KEY is not set. Please create config.json and run with --dart-define-from-file=config.json',
+    //   );
+    // }
+    // _geminiService = GeminiService(apiKey);
     _predictionService = PredictionService();
   }
 
@@ -56,18 +56,18 @@ class _ResultsScreenState extends State<ResultsScreen> {
     }
   }
 
-  Future<void> _getGeneralAiAdvice() async {
-    setState(() {
-      _isGettingAdvice = true;
-      _errorMessage = null;
-      _aiAdvice = null;
-    });
-    final result = await _geminiService.getSoilCareAdvice(widget.soilData);
-    setState(() {
-      _aiAdvice = result;
-      _isGettingAdvice = false;
-    });
-  }
+  // Future<void> _getGeneralAiAdvice() async {
+  //   setState(() {
+  //     // _isGettingAdvice = true;
+  //     _errorMessage = null;
+  //     // _aiAdvice = null;
+  //   });
+  //   final result = await _geminiService.getSoilCareAdvice(widget.soilData);
+  //   setState(() {
+  //     _aiAdvice = result;
+  //     _isGettingAdvice = false;
+  //   });
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -91,12 +91,12 @@ class _ResultsScreenState extends State<ResultsScreen> {
               _buildPredictionResultCard(_predictionResponse!),
             ],
 
-            if (_aiAdvice != null) ...[
-              const SizedBox(height: 24),
-              _buildSectionTitle("General AI Advice"),
-              const SizedBox(height: 16),
-              _buildAiAdviceCard(_aiAdvice!),
-            ],
+            // if (_aiAdvice != null) ...[
+            //   const SizedBox(height: 24),
+            //   _buildSectionTitle("General AI Advice"),
+            //   const SizedBox(height: 16),
+            //   _buildAiAdviceCard(_aiAdvice!),
+            // ],
             if (_errorMessage != null) ...[
               const SizedBox(height: 16),
               Center(
@@ -123,7 +123,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
   }
 
   Widget _buildActionButtons() {
-    bool isAnyActionLoading = _isPredicting || _isGettingAdvice;
+    bool isAnyActionLoading = _isPredicting;
     if (isAnyActionLoading) {
       return const Center(
         child: Padding(
@@ -144,12 +144,12 @@ class _ResultsScreenState extends State<ResultsScreen> {
           gradientColors: [const Color(0xFF2E7D32), const Color(0xFF66BB6A)],
         ),
         const SizedBox(height: 12),
-        _buildGradientButton(
-          onPressed: _getGeneralAiAdvice,
-          icon: Icons.psychology,
-          label: "Get General AI Advice",
-          gradientColors: [const Color(0xFF1976D2), const Color(0xFF42A5F5)],
-        ),
+        // _buildGradientButton(
+        //   onPressed: _getGeneralAiAdvice,
+        //   icon: Icons.psychology,
+        //   label: "Get General AI Advice",
+        //   gradientColors: [const Color(0xFF1976D2), const Color(0xFF42A5F5)],
+        // ),
         const SizedBox(height: 12),
         _buildGradientButton(
           onPressed: () {
